@@ -31,8 +31,21 @@ export async function POST(request: Request) {
             }
         }
 
+        // Validate and parse contribution amount
+        let contributionAmount = 0;
+        if (contribution) {
+            const parsed = parseFloat(contribution.toString());
+            if (!isNaN(parsed) && parsed >= 0 && parsed <= 99999999.99) {
+                contributionAmount = parsed;
+            } else {
+                return NextResponse.json({
+                    message: 'Invalid contribution amount. Must be between 0 and 99,999,999.99'
+                }, { status: 400 });
+            }
+        }
+
         const query = `INSERT INTO Sponsors (event_id, name, contribution_amount, tier, logo_url, status) VALUES (?, ?, ?, ?, ?, ?)`;
-        const [result] = await pool.execute(query, [event_id, name, contribution || 0, tier || 'Partner', logoPath, status]);
+        const [result] = await pool.execute(query, [event_id, name, contributionAmount, tier || 'Partner', logoPath, status]);
 
         return NextResponse.json({ message: 'Sponsor added', sponsorId: (result as any).insertId });
     } catch (error) {

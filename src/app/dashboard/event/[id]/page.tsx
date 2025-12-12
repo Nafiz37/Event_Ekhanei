@@ -403,7 +403,7 @@ export default function EventDetails() {
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-zinc-400 mb-2">Amount</label>
-                                                <input type="number" className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newSponsor.contribution} onChange={e => setNewSponsor({ ...newSponsor, contribution: e.target.value })} />
+                                                <input type="number" min="0" max="99999999.99" step="0.01" className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newSponsor.contribution} onChange={e => setNewSponsor({ ...newSponsor, contribution: e.target.value })} placeholder="Enter amount in ৳" />
                                             </div>
                                         </div>
                                         <div>
@@ -488,7 +488,7 @@ export default function EventDetails() {
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-zinc-400 mb-2">Contribution (৳)</label>
-                                                <input type="number" className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newSponsor.contribution} onChange={e => setNewSponsor({ ...newSponsor, contribution: e.target.value })} />
+                                                <input type="number" min="0" max="99999999.99" step="0.01" required className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newSponsor.contribution} onChange={e => setNewSponsor({ ...newSponsor, contribution: e.target.value })} placeholder="Enter amount in ৳" />
                                             </div>
                                         </div>
                                         <div>
