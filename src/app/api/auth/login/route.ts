@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         const user = users[0];
 
         // Verify password
-        const passwordMatch = await bcrypt.compare(password, user.password_hash);
+        const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (!passwordMatch) {
             return NextResponse.json(
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
         // or use a simple cookie approach if needed later.
         // Let's return the user data (excluding password)
 
-        const { password_hash, ...userWithoutPassword } = user;
+        const { password: _, ...userWithoutPassword } = user;
 
         return NextResponse.json(
             { message: 'Login successful', user: userWithoutPassword },

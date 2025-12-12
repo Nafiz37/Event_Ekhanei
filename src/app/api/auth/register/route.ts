@@ -60,7 +60,7 @@ export async function POST(request: Request) {
 
         // SQL Insert
         const query = `
-      INSERT INTO Users (name, email, password_hash, role, phone, designation, profile_image, organization_id_card, proof_document, is_verified)
+      INSERT INTO Users (name, email, password, role, phone, designation, profile_image, organization_id_card, proof_document, is_verified)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
