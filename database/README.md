@@ -11,6 +11,8 @@ database/
 ├── 03_views_indexes.sql       # Views and performance indexes
 ├── 04_seed.sql                # Sample data (50 users, 30 events, 200+ bookings)
 ├── 05_complex_queries.sql     # Advanced SQL queries demonstrating RDBMS power
+├── 06_advanced_features.sql   # Partitioning, full-text search, JSON, spatial queries
+├── 07_performance_optimization.sql # Query optimization, monitoring, caching
 └── README.md                  # This file
 ```
 
@@ -36,6 +38,12 @@ mysql -u root -p event_koi < 03_views_indexes.sql
 
 # Sample data
 mysql -u root -p event_koi < 04_seed.sql
+
+# Advanced features (optional)
+mysql -u root -p event_koi < 06_advanced_features.sql
+
+# Performance optimization (optional)
+mysql -u root -p event_koi < 07_performance_optimization.sql
 ```
 
 ### 3. Test Complex Queries
@@ -116,6 +124,70 @@ mysql -u root -p event_koi < 05_complex_queries.sql
   8. **RFM Segmentation** - Customer segmentation (Recency, Frequency, Monetary)
   9. **Correlation Analysis** - Sponsor impact on sales
   10. **Predictive Analytics** - Event success probability
+
+### **06_advanced_features.sql**
+- ✅ **Table Partitioning:**
+  - Range partitioning by year
+  - Hash partitioning for distribution
+  
+- ✅ **Full-Text Search:**
+  - Natural language mode
+  - Boolean mode with operators
+  - Query expansion
+  - Relevance scoring
+  
+- ✅ **JSON Operations:**
+  - Store complex data structures
+  - Query JSON fields
+  - JSON aggregations
+  - Extract nested values
+  
+- ✅ **Spatial Queries:**
+  - Distance calculations (Haversine formula)
+  - Geo-location based search
+  - Find events within radius
+  
+- ✅ **Advanced Features:**
+  - Materialized view simulation
+  - Dynamic pivot tables
+  - Hierarchical data (nested comments)
+  - Temporal queries
+  - Multi-level aggregations (ROLLUP, GROUPING SETS)
+
+### **07_performance_optimization.sql**
+- ✅ **Query Analysis:**
+  - EXPLAIN ANALYZE
+  - Query profiling
+  - Execution plan analysis
+  
+- ✅ **Index Optimization:**
+  - Index usage analysis
+  - Find unused indexes
+  - Detect duplicate indexes
+  - Covering indexes
+  
+- ✅ **Query Optimization:**
+  - Subquery optimization
+  - JOIN optimization
+  - Batch operations
+  - Query rewrite techniques
+  
+- ✅ **Caching:**
+  - Query result caching
+  - Summary table caching
+  - Cache invalidation
+  
+- ✅ **Monitoring:**
+  - Table size analysis
+  - Slow query detection
+  - Lock contention analysis
+  - Connection monitoring
+  
+- ✅ **Maintenance:**
+  - Partition management
+  - Statistics updates
+  - Table optimization
+  - Backup procedures
 
 ## 🎯 Key RDBMS Features Demonstrated
 
