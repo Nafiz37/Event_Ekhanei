@@ -66,26 +66,29 @@ export async function POST(request: Request) {
         let image_url = null;
         if (image && typeof image === 'object' && (image as any).name) {
             try {
-                console.log('📷 Processing image upload...');
+                console.log('📷 Processing image upload to Cloudinary...');
                 const file = image as File;
                 const bytes = await file.arrayBuffer();
                 const buffer = Buffer.from(bytes);
 
-                const fs = require('fs');
-                const path = require('path');
-                const uploadDir = path.join(process.cwd(), 'public/uploads');
+                // Convert to base64 for Cloudinary
+                const base64Image = `data:${file.type};base64,${buffer.toString('base64')}`;
 
-                // Create directory if it doesn't exist
-                if (!fs.existsSync(uploadDir)) {
-                    console.log('📁 Creating uploads directory...');
-                    fs.mkdirSync(uploadDir, { recursive: true });
-                }
+                // Upload to Cloudinary
+                const cloudinary = require('cloudinary').v2;
+                cloudinary.config({
+                    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'demo',
+                    api_key: process.env.CLOUDINARY_API_KEY || 'demo',
+                    api_secret: process.env.CLOUDINARY_API_SECRET || 'demo'
+                });
 
-                const fileName = `post-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
-                const filePath = path.join(uploadDir, fileName);
-                fs.writeFileSync(filePath, buffer);
-                image_url = `/uploads/${fileName}`;
-                console.log('✅ Image saved:', image_url);
+                const uploadResult = await cloudinary.uploader.upload(base64Image, {
+                    folder: 'event-koi/posts',
+                    resource_type: 'auto'
+                });
+
+                image_url = uploadResult.secure_url;
+                console.log('✅ Image uploaded to Cloudinary:', image_url);
             } catch (imgError) {
                 console.error('⚠️ Image upload failed (continuing without image):', imgError);
                 // Continue without image rather than failing the entire post
