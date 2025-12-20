@@ -27,6 +27,7 @@ A comprehensive, production-ready event management platform built with **Next.js
 
 ### 🎫 **Event Management**
 - Create, edit, and delete events with rich details
+- Custom venue input or selection from existing venues
 - Multi-tier ticket types with inventory management
 - QR code generation for ticket validation
 - Real-time ticket scanning system
@@ -44,8 +45,9 @@ A comprehensive, production-ready event management platform built with **Next.js
 ### 🤝 **Social Features**
 - **Friendship System:** Search users, send/accept friend requests
 - **Real-Time Chat:** Direct messaging between friends with polling updates
-- **Event Updates:** Organizers post announcements with images
+- **Event Updates:** Organizers post announcements with cloud-hosted images
 - **Engagement:** Like and comment on event posts
+- **Image Storage:** Cloudinary integration for reliable image hosting
 
 ### � **Sponsorship Management**
 - Apply to sponsor events (open to all users)
@@ -79,13 +81,20 @@ A comprehensive, production-ready event management platform built with **Next.js
 ### **Backend**
 - **Runtime:** Node.js
 - **API:** Next.js API Routes
-- **Database:** MySQL 8.0
+- **Database:** MySQL 8.0 (TiDB Cloud for production)
 - **ORM:** mysql2 (raw SQL for performance)
-- **File Storage:** Local file system (`/public/uploads`)
+- **File Storage:** Cloudinary (cloud image storage)
+
+### **Deployment**
+- **Platform:** Vercel (serverless deployment)
+- **Database:** TiDB Cloud (MySQL-compatible)
+- **CDN:** Cloudinary (image hosting)
+- **Live URL:** [event-koi.vercel.app](https://event-koi.vercel.app)
 
 ### **Key Libraries**
 - `uuid` - Unique ticket code generation
 - `bcryptjs` - Password hashing
+- `cloudinary` - Cloud image uploads
 - `next/font` - Optimized font loading
 
 ---
@@ -170,8 +179,9 @@ Centralized notification system.
 
 ### **Prerequisites**
 - Node.js 18+ 
-- MySQL 8.0+
+- MySQL 8.0+ (or TiDB Cloud account)
 - npm or yarn
+- Cloudinary account (free tier available)
 
 ### **Installation**
 
@@ -186,40 +196,36 @@ cd Event-Koi
 npm install
 ```
 
-3. **Configure Database**
+3. **Configure Environment Variables**
 
-Create a MySQL database and update connection details in `src/lib/db.ts`:
-```typescript
-const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'your_username',
-  password: 'your_password',
-  database: 'event_koi',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
+Create a `.env.local` file in the root directory:
+```env
+# Database (TiDB Cloud or local MySQL)
+DB_HOST=your_db_host
+DB_PORT=4000
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_NAME=event_koi
+DB_SSL=true
+
+# Cloudinary (for image uploads)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
-4. **Initialize Database Tables**
+4. **Initialize Database**
 
-Run the setup APIs to create tables:
+Run the database reset script:
 ```bash
-# Users, Events, Categories, Venues
-curl http://localhost:3000/api/setup/bookings
-
-# Friendships
-curl http://localhost:3000/api/setup/friends
-
-# Messages
-curl http://localhost:3000/api/setup/chat
-
-# Event Posts
-curl http://localhost:3000/api/setup/blog
-
-# Notifications
-curl http://localhost:3000/api/setup/notifications
+node scripts/reset-database.js
 ```
+
+This will:
+- Drop existing tables
+- Create all required tables
+- Load seed data
+- Create default admin user
 
 5. **Start Development Server**
 ```bash
@@ -232,10 +238,49 @@ http://localhost:3000
 ```
 
 ### **Default Admin Account**
-Create an admin user manually in MySQL:
-```sql
-INSERT INTO Users (name, email, password, role) 
-VALUES ('Admin', 'admin@eventkoi.com', '$2a$10$hashedpassword', 'admin');
+After running the database reset script, you can login with:
+```
+Email: admin@eventkoi.com
+Password: admin123
+```
+
+### **Deployment to Production**
+
+#### **1. Deploy to Vercel**
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel
+```
+
+#### **2. Set up TiDB Cloud Database**
+1. Create account at https://tidbcloud.com/
+2. Create a new cluster (free tier available)
+3. Get connection details from dashboard
+
+#### **3. Configure Vercel Environment Variables**
+Go to Vercel Dashboard → Your Project → Settings → Environment Variables
+
+Add these variables:
+```
+DB_HOST=your_tidb_host
+DB_PORT=4000
+DB_USER=your_tidb_user
+DB_PASSWORD=your_tidb_password
+DB_NAME=event_koi
+DB_SSL=true
+
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
+#### **4. Initialize Production Database**
+Run the reset script locally with production credentials to set up the cloud database:
+```bash
+node scripts/reset-database.js
 ```
 
 ---
