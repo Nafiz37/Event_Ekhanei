@@ -10,7 +10,7 @@ export default function RegisterPage() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [role, setRole] = useState('attendee');
+    // const [role, setRole] = useState('attendee'); // Default role logic moved to backend
     const [phone, setPhone] = useState('');
     const [designation, setDesignation] = useState('');
 
@@ -37,7 +37,7 @@ export default function RegisterPage() {
             formData.append('name', name);
             formData.append('email', email);
             formData.append('password', password);
-            formData.append('role', role);
+            // formData.append('role', role); // Role is handled by backend now
             formData.append('phone', phone);
             formData.append('designation', designation);
 
@@ -183,29 +183,15 @@ export default function RegisterPage() {
 
                             {step === 2 && (
                                 <>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-400 mb-2">Phone Number</label>
-                                            <input
-                                                type="tel"
-                                                className="premium-input w-full"
-                                                placeholder="+880 1234 567890"
-                                                value={phone}
-                                                onChange={e => setPhone(e.target.value)}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-400 mb-2">I am a...</label>
-                                            <select
-                                                className="premium-input w-full"
-                                                value={role}
-                                                onChange={e => setRole(e.target.value)}
-                                            >
-                                                <option value="attendee">Attendee</option>
-                                                <option value="organizer">Organizer</option>
-                                            </select>
-                                        </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Phone Number</label>
+                                        <input
+                                            type="tel"
+                                            className="premium-input w-full"
+                                            placeholder="+880 1234 567890"
+                                            value={phone}
+                                            onChange={e => setPhone(e.target.value)}
+                                        />
                                     </div>
 
                                     <div>

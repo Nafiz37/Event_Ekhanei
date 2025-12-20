@@ -26,9 +26,10 @@ export async function POST(request: Request) {
             );
         }
 
-        // Validate Role
-        const validRoles = ['admin', 'organizer', 'attendee'];
-        const userRole = validRoles.includes(role) ? role : 'attendee';
+        // Validate Role (ENFORCE ATTENDEE FOR PUBLIC REGISTRATION)
+        // const validRoles = ['admin', 'organizer', 'attendee'];
+        // const userRole = validRoles.includes(role) ? role : 'attendee';
+        const userRole = 'attendee';
 
         // Helper to save file
         const saveFile = async (file: File) => {
