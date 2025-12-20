@@ -17,9 +17,11 @@ export default function CreateEvent() {
         start_time: '',
         end_time: '',
         venue_id: '',
+        venue_name: '',
         category_id: '',
         status: 'PUBLISHED'
     });
+    const [useCustomVenue, setUseCustomVenue] = useState(false);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
@@ -163,17 +165,36 @@ export default function CreateEvent() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-2">Venue</label>
-                                    <select
-                                        className="premium-input w-full"
-                                        value={formData.venue_id}
-                                        onChange={(e) => setFormData({ ...formData, venue_id: e.target.value })}
-                                    >
-                                        <option value="">Select a Venue (Optional)</option>
-                                        {venues.map((v: any) => (
-                                            <option key={v.venue_id} value={v.venue_id}>{v.name}</option>
-                                        ))}
-                                    </select>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-sm font-medium text-gray-400">Venue</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setUseCustomVenue(!useCustomVenue)}
+                                            className="text-xs text-pink-400 hover:text-pink-300 transition-colors"
+                                        >
+                                            {useCustomVenue ? '📍 Choose from list' : '✏️ Enter custom location'}
+                                        </button>
+                                    </div>
+                                    {useCustomVenue ? (
+                                        <input
+                                            type="text"
+                                            className="premium-input w-full"
+                                            placeholder="Enter custom venue name (e.g., My Office, Online Event)"
+                                            value={formData.venue_name}
+                                            onChange={(e) => setFormData({ ...formData, venue_name: e.target.value, venue_id: '' })}
+                                        />
+                                    ) : (
+                                        <select
+                                            className="premium-input w-full"
+                                            value={formData.venue_id}
+                                            onChange={(e) => setFormData({ ...formData, venue_id: e.target.value, venue_name: '' })}
+                                        >
+                                            <option value="">Select a Venue (Optional)</option>
+                                            {venues.map((v: any) => (
+                                                <option key={v.venue_id} value={v.venue_id}>{v.name}</option>
+                                            ))}
+                                        </select>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-400 mb-2">Category</label>

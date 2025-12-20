@@ -58,10 +58,20 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { organizer_id, venue_id, category_id, title, description, start_time, end_time, status, listing_fee, payment_confirmed } = body;
+        const { organizer_id, venue_id, venue_name, category_id, title, description, start_time, end_time, status, listing_fee, payment_confirmed } = body;
 
         if (!organizer_id || !title || !start_time || !end_time) {
             return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+        }
+
+        // Handle custom venue: if venue_name is provided but no venue_id, create a new venue
+        let finalVenueId = venue_id || null;
+        if (venue_name && !venue_id) {
+            const [venueResult] = await pool.execute(
+                'INSERT INTO Venues (name, address, city, capacity) VALUES (?, ?, ?, ?)',
+                [venue_name, 'Custom Location', 'N/A', 100]
+            );
+            finalVenueId = (venueResult as any).insertId;
         }
 
         const query = `
@@ -71,7 +81,7 @@ export async function POST(request: Request) {
 
         const [result] = await pool.execute(query, [
             organizer_id,
-            venue_id || null,
+            finalVenueId,
             category_id || null,
             title,
             description || '',
