@@ -47,47 +47,69 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
+        console.log('📝 POST /api/posts - Starting request processing');
+
         const formData = await request.formData();
         const event_id = formData.get('event_id');
         const user_id = formData.get('user_id');
         const content = formData.get('content');
-        const image = formData.get('image'); // Simplified: Expecting URL or we handle upload separately. 
-        // For simplicity in this env, let's assume image is just a string URL or we skip complex upload logic for now
-        // Or if it IS a file, we need the upload logic.
-        // Let's stick to text content first or basic URL input for image to keep it reliable. 
-        // If user sends file, we need the save logic. I'll check previous upload implementation.
-        // Previous uses `fs` to save to public. I will replicate simplified version or just take text for now if easiest.
-        // User asked for "authenticity" so image is good. I'll implement basic file save.
+        const image = formData.get('image');
 
-        // Re-using file save logic from `user/profile/route.ts` if possible.
-        // Let's copy it here briefly.
+        console.log('📋 Received data:', { event_id, user_id, content: content?.toString().substring(0, 50), hasImage: !!image });
+
+        // Validation
+        if (!event_id || !user_id || !content) {
+            console.error('❌ Missing required fields:', { event_id: !!event_id, user_id: !!user_id, content: !!content });
+            return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+        }
 
         let image_url = null;
         if (image && typeof image === 'object' && (image as any).name) {
-            const file = image as File;
-            const bytes = await file.arrayBuffer();
-            const buffer = Buffer.from(bytes);
+            try {
+                console.log('📷 Processing image upload...');
+                const file = image as File;
+                const bytes = await file.arrayBuffer();
+                const buffer = Buffer.from(bytes);
 
-            // Save to public/uploads
-            const fs = require('fs');
-            const path = require('path');
-            const uploadDir = path.join(process.cwd(), 'public/uploads');
-            if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+                const fs = require('fs');
+                const path = require('path');
+                const uploadDir = path.join(process.cwd(), 'public/uploads');
 
-            const fileName = `post-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
-            const filePath = path.join(uploadDir, fileName);
-            fs.writeFileSync(filePath, buffer);
-            image_url = `/uploads/${fileName}`;
+                // Create directory if it doesn't exist
+                if (!fs.existsSync(uploadDir)) {
+                    console.log('📁 Creating uploads directory...');
+                    fs.mkdirSync(uploadDir, { recursive: true });
+                }
+
+                const fileName = `post-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
+                const filePath = path.join(uploadDir, fileName);
+                fs.writeFileSync(filePath, buffer);
+                image_url = `/uploads/${fileName}`;
+                console.log('✅ Image saved:', image_url);
+            } catch (imgError) {
+                console.error('⚠️ Image upload failed (continuing without image):', imgError);
+                // Continue without image rather than failing the entire post
+            }
         }
 
+        console.log('💾 Inserting post into database...');
         const [result] = await pool.execute(
             'INSERT INTO EventPosts (event_id, user_id, content, image_url) VALUES (?, ?, ?, ?)',
             [event_id, user_id, content, image_url]
         );
 
-        return NextResponse.json({ message: 'Post created', post_id: (result as any).insertId });
+        console.log('✅ Post created successfully:', (result as any).insertId);
+        return NextResponse.json({ message: 'Post created', post_id: (result as any).insertId }, { status: 201 });
     } catch (error) {
-        console.error(error);
-        return NextResponse.json({ message: 'Error creating post' }, { status: 500 });
+        console.error('❌ Error creating post:', error);
+        console.error('Error details:', {
+            message: (error as any).message,
+            code: (error as any).code,
+            sqlMessage: (error as any).sqlMessage
+        });
+        return NextResponse.json({
+            message: 'Error creating post',
+            error: (error as any).message
+        }, { status: 500 });
     }
 }
