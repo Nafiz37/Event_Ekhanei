@@ -3,6 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import {
+    Calendar, MapPin, Type, AlignLeft, CreditCard, DollarSign,
+    ArrowLeft, CheckCircle, Loader, Layers, Clock, ShieldCheck
+} from 'lucide-react';
 
 export default function CreateEvent() {
     const router = useRouter();
@@ -10,6 +15,7 @@ export default function CreateEvent() {
     const [loading, setLoading] = useState(false);
     const [venues, setVenues] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
+    const [useCustomVenue, setUseCustomVenue] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -21,7 +27,6 @@ export default function CreateEvent() {
         category_id: '',
         status: 'PUBLISHED'
     });
-    const [useCustomVenue, setUseCustomVenue] = useState(false);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
@@ -77,234 +82,303 @@ export default function CreateEvent() {
     if (!user) return null;
 
     return (
-        <div className="relative min-h-screen animated-gradient-bg text-white">
-            {/* Floating Orbs */}
-            <div className="floating-orb orb-1 opacity-30" />
-            <div className="floating-orb orb-2 opacity-30" />
+        <div className="min-h-screen bg-[#0B0F1A] text-white font-sans selection:bg-cyan-500/30 pb-20">
+            {/* Ambient Background */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute top-0 right-0 w-[40vw] h-[40vw] bg-cyan-900/10 rounded-full blur-[120px]" />
+                <div className="absolute bottom-0 left-0 w-[40vw] h-[40vw] bg-purple-900/10 rounded-full blur-[120px]" />
+            </div>
 
-            <div className="relative z-10 max-w-4xl mx-auto p-6 lg:p-8">
+            <div className="relative z-10 max-w-5xl mx-auto p-6 lg:p-10">
                 {/* Header */}
-                <header className="mb-8">
+                <motion.header
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-10"
+                >
                     <Link
                         href="/dashboard"
-                        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6"
+                        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 group"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                        </svg>
+                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                         Back to Dashboard
                     </Link>
 
-                    <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-2xl shadow-lg shadow-pink-500/30">
+                    <div className="flex items-center gap-5">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-3xl shadow-lg shadow-cyan-500/20">
                             ✨
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black text-gradient-glow">Create New Event</h1>
-                            <p className="text-gray-400 mt-1">Fill in the details to publish your event</p>
+                            <h1 className="text-4xl font-black tracking-tight text-white">Create <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">Event</span></h1>
+                            <p className="text-gray-400 mt-1">Design an unforgettable experience.</p>
                         </div>
                     </div>
-                </header>
+                </motion.header>
 
-                {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-8">
-                    {/* Event Details Card */}
-                    <div className="glass-strong rounded-3xl p-8">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center text-lg">
-                                📝
-                            </div>
-                            <h2 className="text-xl font-bold text-white">Event Details</h2>
-                        </div>
-
-                        <div className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">Event Title *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="premium-input w-full text-lg"
-                                    placeholder="Give your event an exciting name"
-                                    value={formData.title}
-                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                />
+                    {/* Event Details Section */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Left Info Panel */}
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="lg:col-span-1 space-y-6"
+                        >
+                            <div className="bg-[#161B2B] border border-white/5 rounded-3xl p-6">
+                                <h3 className="text-lg font-bold text-white mb-2">Event Basics</h3>
+                                <p className="text-sm text-gray-400 leading-relaxed">
+                                    Provide the core details of your event. A catchy title and clear description help attract more attendees.
+                                </p>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">Description</label>
-                                <textarea
-                                    className="premium-input w-full h-32 resize-none"
-                                    placeholder="Tell people what your event is about..."
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                />
+                            <div className="bg-[#161B2B] border border-white/5 rounded-3xl p-6">
+                                <h3 className="text-lg font-bold text-white mb-2">Timing & Location</h3>
+                                <p className="text-sm text-gray-400 leading-relaxed">
+                                    Ensure the dates are correct. Choose a venue from our list or specify a custom location.
+                                </p>
                             </div>
+                        </motion.div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Right Form Inputs */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="lg:col-span-2 space-y-6"
+                        >
+                            <div className="bg-[#161B2B] border border-white/5 rounded-3xl p-8 space-y-6">
+                                {/* Title */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-2">Start Date & Time *</label>
-                                    <input
-                                        type="datetime-local"
-                                        required
-                                        className="premium-input w-full dark-calendar"
-                                        value={formData.start_time}
-                                        onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-2">End Date & Time *</label>
-                                    <input
-                                        type="datetime-local"
-                                        required
-                                        className="premium-input w-full dark-calendar"
-                                        value={formData.end_time}
-                                        onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="block text-sm font-medium text-gray-400">Venue</label>
-                                        <button
-                                            type="button"
-                                            onClick={() => setUseCustomVenue(!useCustomVenue)}
-                                            className="text-xs text-pink-400 hover:text-pink-300 transition-colors"
-                                        >
-                                            {useCustomVenue ? '📍 Choose from list' : '✏️ Enter custom location'}
-                                        </button>
-                                    </div>
-                                    {useCustomVenue ? (
+                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Event Title</label>
+                                    <div className="relative group">
+                                        <Type className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
                                         <input
                                             type="text"
-                                            className="premium-input w-full"
-                                            placeholder="Enter custom venue name (e.g., My Office, Online Event)"
-                                            value={formData.venue_name}
-                                            onChange={(e) => setFormData({ ...formData, venue_name: e.target.value, venue_id: '' })}
+                                            required
+                                            className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all font-medium"
+                                            placeholder="e.g. Summer Music Festival 2024"
+                                            value={formData.title}
+                                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                         />
-                                    ) : (
-                                        <select
-                                            className="premium-input w-full"
-                                            value={formData.venue_id}
-                                            onChange={(e) => setFormData({ ...formData, venue_id: e.target.value, venue_name: '' })}
-                                        >
-                                            <option value="">Select a Venue (Optional)</option>
-                                            {venues.map((v: any) => (
-                                                <option key={v.venue_id} value={v.venue_id}>{v.name}</option>
-                                            ))}
-                                        </select>
-                                    )}
+                                    </div>
                                 </div>
+
+                                {/* Description */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-2">Category</label>
-                                    <select
-                                        className="premium-input w-full"
-                                        value={formData.category_id}
-                                        onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                                    >
-                                        <option value="">Select a Category (Optional)</option>
-                                        {categories.map((c: any) => (
-                                            <option key={c.category_id} value={c.category_id}>{c.name}</option>
-                                        ))}
-                                    </select>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Description</label>
+                                    <div className="relative group">
+                                        <AlignLeft className="absolute left-4 top-4 text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
+                                        <textarea
+                                            className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all font-medium min-h-[120px] resize-none"
+                                            placeholder="Tell potential attendees what to expect..."
+                                            value={formData.description}
+                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Start Time */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Start Time</label>
+                                        <div className="relative group">
+                                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
+                                            <input
+                                                type="datetime-local"
+                                                required
+                                                className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all font-medium custom-date-input"
+                                                value={formData.start_time}
+                                                onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* End Time */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">End Time</label>
+                                        <div className="relative group">
+                                            <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
+                                            <input
+                                                type="datetime-local"
+                                                required
+                                                className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all font-medium custom-date-input"
+                                                value={formData.end_time}
+                                                onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Venue */}
+                                    <div>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Venue</label>
+                                            <button
+                                                type="button"
+                                                onClick={() => setUseCustomVenue(!useCustomVenue)}
+                                                className="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold uppercase tracking-wider hover:underline"
+                                            >
+                                                {useCustomVenue ? 'Select Existing' : 'Enter Custom'}
+                                            </button>
+                                        </div>
+                                        <div className="relative group">
+                                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
+                                            {useCustomVenue ? (
+                                                <input
+                                                    type="text"
+                                                    placeholder="Custom Venue Name"
+                                                    className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all font-medium"
+                                                    value={formData.venue_name}
+                                                    onChange={(e) => setFormData({ ...formData, venue_name: e.target.value, venue_id: '' })}
+                                                />
+                                            ) : (
+                                                <select
+                                                    className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium appearance-none"
+                                                    value={formData.venue_id}
+                                                    onChange={(e) => setFormData({ ...formData, venue_id: e.target.value, venue_name: '' })}
+                                                >
+                                                    <option value="" className="bg-[#0B0F1A]">Select a Venue</option>
+                                                    {venues.map((v: any) => (
+                                                        <option key={v.venue_id} value={v.venue_id} className="bg-[#0B0F1A]">{v.name}</option>
+                                                    ))}
+                                                </select>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Category */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Category</label>
+                                        <div className="relative group">
+                                            <Layers className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
+                                            <select
+                                                className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium appearance-none"
+                                                value={formData.category_id}
+                                                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                                            >
+                                                <option value="" className="bg-[#0B0F1A]">Select Category</option>
+                                                {categories.map((c: any) => (
+                                                    <option key={c.category_id} value={c.category_id} className="bg-[#0B0F1A]">{c.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
 
-                    {/* Payment Card */}
-                    <div className="glass-strong rounded-3xl p-8">
-                        <div className="flex items-center justify-between mb-8">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-lg">
-                                    💳
+                    {/* Payment Section */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.3 }}
+                            className="lg:col-span-1"
+                        >
+                            <div className="bg-[#161B2B] border border-white/5 rounded-3xl p-6 h-full flex flex-col justify-center">
+                                <div className="p-3 bg-green-500/10 rounded-xl w-fit text-green-500 mb-4">
+                                    <DollarSign size={24} />
                                 </div>
-                                <div>
-                                    <h2 className="text-xl font-bold text-white">Listing Fee Payment</h2>
-                                    <p className="text-sm text-gray-400">Pay to publish your event</p>
+                                <h3 className="text-lg font-bold text-white mb-2">Listing Fee</h3>
+                                <div className="flex items-baseline gap-1 mb-2">
+                                    <span className="text-3xl font-black text-white">৳1,000</span>
+                                    <span className="text-sm text-gray-500">BDT</span>
                                 </div>
+                                <p className="text-sm text-gray-400">
+                                    A one-time fee is required to publish your event on the Event Koi platform.
+                                </p>
                             </div>
-                            <div className="text-right">
-                                <span className="text-3xl font-black text-gradient">৳1,000</span>
-                                <span className="block text-xs text-gray-500">One-time fee</span>
-                            </div>
-                        </div>
+                        </motion.div>
 
-                        <div className="premium-card p-6 shimmer">
-                            <div className="absolute top-4 right-4 opacity-10">
-                                <svg className="w-20 h-20 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M2 10h20v2H2zm0-2V6c0-1.103.897-2 2-2h16c1.103 0 2 .897 2 2v2H2zm0 12v-8h20v8c0 1.103-.897 2-2 2H4c-1.103 0-2-.897-2-2z" />
-                                </svg>
-                            </div>
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4 }}
+                            className="lg:col-span-2"
+                        >
+                            <div className="bg-[#161B2B] border border-white/5 rounded-3xl p-8 relative overflow-hidden">
+                                {/* Decorative Background for Payment */}
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-                            <div className="relative z-10 space-y-5">
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Card Number</label>
-                                    <input
-                                        type="text"
-                                        placeholder="0000 0000 0000 0000"
-                                        className="premium-input w-full font-mono tracking-widest"
-                                    />
+                                <div className="flex items-center gap-3 mb-6">
+                                    <CreditCard className="text-cyan-400" size={24} />
+                                    <h3 className="text-xl font-bold text-white">Payment Method</h3>
                                 </div>
-                                <div className="grid grid-cols-2 gap-5">
+
+                                {/* Mock Card Form */}
+                                <div className="space-y-5">
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Expiry</label>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Card Number</label>
                                         <input
                                             type="text"
-                                            placeholder="MM/YY"
-                                            className="premium-input w-full font-mono text-center"
+                                            placeholder="0000 0000 0000 0000"
+                                            className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-700 focus:outline-none focus:border-cyan-500/50 transition-all font-mono tracking-widest"
                                         />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Expiry Date</label>
+                                            <input
+                                                type="text"
+                                                placeholder="MM / YY"
+                                                className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-700 focus:outline-none focus:border-cyan-500/50 transition-all font-mono text-center"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">CVC</label>
+                                            <input
+                                                type="text"
+                                                placeholder="123"
+                                                className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-700 focus:outline-none focus:border-cyan-500/50 transition-all font-mono text-center"
+                                            />
+                                        </div>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">CVC</label>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Cardholder Name</label>
                                         <input
                                             type="text"
-                                            placeholder="123"
-                                            className="premium-input w-full font-mono text-center"
+                                            placeholder="NAME ON CARD"
+                                            className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-700 focus:outline-none focus:border-cyan-500/50 transition-all font-medium uppercase"
                                         />
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Cardholder Name</label>
-                                    <input
-                                        type="text"
-                                        placeholder="JOHN DOE"
-                                        className="premium-input w-full uppercase"
-                                    />
+
+                                <div className="mt-6 flex items-center gap-2 text-xs text-gray-500">
+                                    <ShieldCheck size={14} className="text-green-500" />
+                                    <span>Payments are secure and encrypted.</span>
                                 </div>
                             </div>
-                        </div>
-
-                        <div className="mt-6 flex items-center gap-3 text-sm text-gray-400">
-                            <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                            </svg>
-                            <span>Your payment is secure and encrypted</span>
-                        </div>
+                        </motion.div>
                     </div>
 
-                    {/* Submit Button */}
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full gradient-btn py-5 rounded-2xl text-xl font-bold disabled:opacity-50 flex items-center justify-center gap-3"
+                    {/* Submit Action */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                        className="pt-6"
                     >
-                        {loading ? (
-                            <>
-                                <svg className="animate-spin w-6 h-6" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                </svg>
-                                Creating Event...
-                            </>
-                        ) : (
-                            <>
-                                <span>🚀</span>
-                                Create & Publish Event
-                            </>
-                        )}
-                    </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-5 rounded-2xl shadow-xl shadow-cyan-500/20 transition-all hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-3 text-lg"
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader className="w-6 h-6 animate-spin" />
+                                    Processing Payment & Creating Event...
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle className="w-6 h-6" />
+                                    Pay & Publish Event
+                                </>
+                            )}
+                        </button>
+                    </motion.div>
                 </form>
             </div>
         </div>

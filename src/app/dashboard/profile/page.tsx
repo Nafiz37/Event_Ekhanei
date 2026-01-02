@@ -1,16 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    User, Upload, FileText, CheckCircle, Shield, ArrowLeft,
+    MessageCircle, Search, UserPlus, X, Send, Clock,
+    Calendar, MapPin, ChevronRight, Users, Loader, Check
+} from 'lucide-react';
 
 export default function ProfilePage() {
     const router = useRouter();
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
-    const [activeChat, setActiveChat] = useState<any>(null);
 
+    // Form State
     const [formData, setFormData] = useState({
         designation: '',
         profile_image: null as File | null,
@@ -71,6 +77,7 @@ export default function ProfilePage() {
             if (res.ok) {
                 alert('Profile updated successfully!');
                 fetchData(user.id);
+                // Reset file inputs visually if needed, though they are uncontrolled usually
             } else {
                 alert('Update failed');
             }
@@ -84,109 +91,108 @@ export default function ProfilePage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen animated-gradient-bg flex items-center justify-center">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-white text-lg">Loading profile...</p>
-                </div>
+            <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center">
+                <Loader className="w-8 h-8 text-cyan-500 animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="relative min-h-screen animated-gradient-bg text-white">
-            {/* Floating Orbs */}
-            <div className="floating-orb orb-1 opacity-30" />
-            <div className="floating-orb orb-2 opacity-30" />
+        <div className="min-h-screen bg-[#0B0F1A] text-white font-sans selection:bg-cyan-500/30 pb-20">
+            {/* Ambient Background */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute top-[-10%] right-[-5%] w-[30vw] h-[30vw] bg-cyan-900/10 rounded-full blur-[100px]" />
+                <div className="absolute bottom-[-10%] left-[-5%] w-[30vw] h-[30vw] bg-purple-900/10 rounded-full blur-[100px]" />
+            </div>
 
-            <div className="relative z-10 max-w-6xl mx-auto p-6 lg:p-8">
+            <div className="relative z-10 max-w-7xl mx-auto p-6 lg:p-10">
                 {/* Header */}
-                <header className="mb-8">
+                <motion.header
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-10"
+                >
                     <Link
                         href="/dashboard"
-                        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6"
+                        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 group"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                        </svg>
+                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                         Back to Dashboard
                     </Link>
 
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-8">
                         <div>
-                            <h1 className="text-4xl font-black text-gradient-glow">My Profile</h1>
-                            <p className="text-gray-400 mt-2">Manage your account and verification</p>
+                            <h1 className="text-4xl font-black tracking-tight mb-2">My <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Profile</span></h1>
+                            <p className="text-gray-400">Manage your persona and verification status.</p>
                         </div>
-                        <div className="flex gap-6">
-                            <div className="text-center glass rounded-2xl px-6 py-4">
-                                <span className="block text-3xl font-bold text-gradient">{user?.events_organized || 0}</span>
-                                <span className="text-xs text-gray-400 uppercase tracking-wider">Organized</span>
-                            </div>
-                            <div className="text-center glass rounded-2xl px-6 py-4">
-                                <span className="block text-3xl font-bold text-gradient">{user?.events_attended || 0}</span>
-                                <span className="text-xs text-gray-400 uppercase tracking-wider">Attended</span>
-                            </div>
+                        <div className="flex gap-4">
+                            <StatBadge count={user?.events_organized || 0} label="Organized" />
+                            <StatBadge count={user?.events_attended || 0} label="Attended" />
                         </div>
                     </div>
-                </header>
+                </motion.header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Profile Card */}
-                    <div className="lg:col-span-1">
-                        <div className="glass-strong rounded-3xl p-8 text-center sticky top-8">
-                            {/* Avatar */}
-                            <div className="relative inline-block mb-6">
-                                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 p-1">
-                                    <div className="w-full h-full rounded-full bg-black overflow-hidden flex items-center justify-center">
-                                        {user?.profile_image ? (
-                                            <img src={user.profile_image} alt="Profile" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <span className="text-4xl">👤</span>
-                                        )}
+                    {/* Left Column: Profile Card */}
+                    <div className="lg:col-span-1 space-y-8">
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="bg-[#161B2B] border border-white/5 rounded-3xl p-8 sticky top-8"
+                        >
+                            <div className="flex flex-col items-center text-center">
+                                <div className="relative mb-6 group">
+                                    <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-br from-cyan-500 to-purple-600">
+                                        <div className="w-full h-full rounded-full bg-[#0B0F1A] overflow-hidden flex items-center justify-center relative">
+                                            {user?.profile_image ? (
+                                                <img src={user.profile_image} alt="Profile" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <User size={48} className="text-gray-600" />
+                                            )}
+                                        </div>
                                     </div>
+                                    {user?.is_verified && (
+                                        <div className="absolute bottom-0 right-0 bg-cyan-500 text-black p-1.5 rounded-full border-4 border-[#161B2B]" title="Verified User">
+                                            <Check size={14} strokeWidth={4} />
+                                        </div>
+                                    )}
                                 </div>
-                                {user?.is_verified && (
-                                    <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-lg shadow-lg">
-                                        ✓
-                                    </div>
-                                )}
-                            </div>
 
-                            <h2 className="text-2xl font-bold text-white mb-1">{user?.name}</h2>
-                            <p className="text-gray-400 text-sm mb-4">{user?.email}</p>
+                                <h2 className="text-2xl font-bold text-white mb-1">{user?.name}</h2>
+                                <p className="text-cyan-400 text-sm font-medium mb-4">{user?.email}</p>
 
-                            <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold mb-6 ${user?.is_verified ? 'badge-success' : 'badge-warning'}`}>
-                                {user?.is_verified ? '✅ Verified User' : '⚠️ Not Verified'}
-                            </span>
-
-                            <div className="text-left space-y-4 pt-6 border-t border-white/10">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-400 text-sm">Role</span>
-                                    <span className="badge-primary capitalize">{user?.role}</span>
+                                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider mb-8 ${user?.is_verified ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'}`}>
+                                    {user?.is_verified ? <CheckCircle size={14} /> : <Shield size={14} />}
+                                    {user?.is_verified ? 'Verified Account' : 'Not Verified'}
                                 </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-400 text-sm">Phone</span>
-                                    <span className="text-white font-medium">{user?.phone || 'N/A'}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-400 text-sm">Designation</span>
-                                    <span className="text-white font-medium">{user?.designation || 'N/A'}</span>
+
+                                <div className="w-full space-y-4 pt-6 border-t border-white/5">
+                                    <ProfileDetail label="Role" value={user?.role} capitalize />
+                                    <ProfileDetail label="Phone" value={user?.phone || 'N/A'} />
+                                    <ProfileDetail label="Designation" value={user?.designation || 'N/A'} />
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
 
-                    {/* Right Column */}
+                    {/* Right Column: Edit & Functional Components */}
                     <div className="lg:col-span-2 space-y-8">
-                        {/* Verification Form */}
-                        <div className="glass-strong rounded-3xl p-8">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-xl">
-                                    📋
+
+                        {/* 1. Verification / Edit Form */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="bg-[#161B2B] border border-white/5 rounded-3xl p-8"
+                        >
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="p-3 rounded-2xl bg-cyan-500/10 text-cyan-400">
+                                    <FileText size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-white">Verification Documents</h3>
-                                    <p className="text-gray-400 text-sm">Upload documents to get verified</p>
+                                    <h3 className="text-xl font-bold text-white">Profile Details</h3>
+                                    <p className="text-gray-400 text-sm">Update your information and documents</p>
                                 </div>
                             </div>
 
@@ -195,75 +201,88 @@ export default function ProfilePage() {
                                     <label className="block text-sm font-medium text-gray-400 mb-2">Designation / Job Title</label>
                                     <input
                                         type="text"
-                                        className="premium-input w-full"
+                                        className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
                                         value={formData.designation}
                                         onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                                        placeholder="e.g. Event Manager, Student"
+                                        placeholder="e.g. Senior Event Manager"
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <FileUpload
+                                    <FileUploadField
                                         label="Profile Picture"
                                         accept="image/*"
-                                        file={formData.profile_image}
                                         onChange={(e) => handleFileChange(e, 'profile_image')}
+                                        file={formData.profile_image}
                                     />
-                                    <FileUpload
-                                        label="Organization ID Card"
+                                    <FileUploadField
+                                        label="Organization ID"
                                         accept="image/*,.pdf"
-                                        file={formData.organization_id_card}
                                         onChange={(e) => handleFileChange(e, 'organization_id_card')}
+                                        file={formData.organization_id_card}
                                     />
                                 </div>
 
-                                <FileUpload
-                                    label="Proof of Legitimacy (Certificates/Docs)"
+                                <FileUploadField
+                                    label="Proof of Legitimacy"
                                     accept="image/*,.pdf"
-                                    file={formData.proof_document}
                                     onChange={(e) => handleFileChange(e, 'proof_document')}
+                                    file={formData.proof_document}
                                 />
 
-                                <button
-                                    type="submit"
-                                    disabled={uploading}
-                                    className="gradient-btn px-8 py-3 rounded-xl font-bold disabled:opacity-50"
-                                >
-                                    {uploading ? (
-                                        <span className="flex items-center gap-2">
-                                            <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                            </svg>
-                                            Uploading...
-                                        </span>
-                                    ) : (
-                                        'Save Changes'
-                                    )}
-                                </button>
+                                <div className="pt-4">
+                                    <button
+                                        type="submit"
+                                        disabled={uploading}
+                                        className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-cyan-500/20 transition-all hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-3"
+                                    >
+                                        {uploading ? (
+                                            <>
+                                                <Loader className="w-5 h-5 animate-spin" />
+                                                Saving Changes...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle className="w-5 h-5" />
+                                                Save Profile Changes
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </form>
-                        </div>
+                        </motion.div>
 
-                        {/* Organized Events */}
+                        {/* 2. Organized Events (If Organizer) */}
                         {user?.role === 'organizer' && (
-                            <div className="glass-strong rounded-3xl p-8">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center text-xl">
-                                        🎪
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                                className="bg-[#161B2B] border border-white/5 rounded-3xl p-8"
+                            >
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-400">
+                                        <Calendar size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold text-white">Events You Organized</h3>
-                                        <p className="text-gray-400 text-sm">Manage your created events</p>
+                                        <h3 className="text-xl font-bold text-white">Your Events</h3>
+                                        <p className="text-gray-400 text-sm">Events you have organized</p>
                                     </div>
                                 </div>
                                 <MyOrganizedEventsList userId={user.id} />
-                            </div>
+                            </motion.div>
                         )}
 
-                        {/* Friends Section */}
-                        <div className="glass-strong rounded-3xl p-8">
+                        {/* 3. Friends & Network */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4 }}
+                            className="bg-[#161B2B] border border-white/5 rounded-3xl p-8"
+                        >
                             <FriendsManager userId={user?.id} />
-                        </div>
+                        </motion.div>
+
                     </div>
                 </div>
             </div>
@@ -271,18 +290,43 @@ export default function ProfilePage() {
     );
 }
 
-function FileUpload({ label, accept, file, onChange }: { label: string; accept: string; file: File | null; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
+// --- Sub Components ---
+
+function StatBadge({ count, label }: { count: number, label: string }) {
     return (
-        <div>
+        <div className="bg-[#161B2B] border border-white/10 px-5 py-3 rounded-2xl text-center min-w-[100px]">
+            <span className="block text-2xl font-bold text-white">{count}</span>
+            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">{label}</span>
+        </div>
+    );
+}
+
+function ProfileDetail({ label, value, capitalize = false }: { label: string, value: string, capitalize?: boolean }) {
+    return (
+        <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-500">{label}</span>
+            <span className={`text-white font-medium ${capitalize ? 'capitalize' : ''}`}>{value}</span>
+        </div>
+    );
+}
+
+function FileUploadField({ label, accept, onChange, file }: { label: string, accept: string, onChange: (e: any) => void, file: File | null }) {
+    return (
+        <div className="group">
             <label className="block text-sm font-medium text-gray-400 mb-2">{label}</label>
-            <div className="glass rounded-xl p-4 hover:bg-white/5 transition-colors cursor-pointer">
-                <input type="file" accept={accept} onChange={onChange} className="w-full text-sm text-gray-400" />
-                {file && (
-                    <span className="text-green-400 text-sm mt-2 block flex items-center gap-2">
-                        <span>✓</span> {file.name}
+            <label className="flex items-center justify-center w-full h-14 px-4 transition bg-[#0B0F1A] border-2 border-dashed border-white/10 rounded-xl cursor-pointer hover:border-cyan-500/50 hover:bg-white/5">
+                <div className="flex items-center gap-2 overflow-hidden">
+                    {file ? (
+                        <Check className="w-5 h-5 text-green-500 shrink-0" />
+                    ) : (
+                        <Upload className="w-5 h-5 text-gray-500 shrink-0 group-hover:text-cyan-400 font-bold" />
+                    )}
+                    <span className={`text-sm truncate ${file ? 'text-green-500 font-medium' : 'text-gray-500 group-hover:text-gray-300'}`}>
+                        {file ? file.name : 'Choose file...'}
                     </span>
-                )}
-            </div>
+                </div>
+                <input type="file" className="hidden" accept={accept} onChange={onChange} />
+            </label>
         </div>
     );
 }
@@ -299,46 +343,39 @@ function MyOrganizedEventsList({ userId }: { userId: string }) {
             .finally(() => setLoading(false));
     }, [userId]);
 
-    if (loading) {
-        return (
-            <div className="space-y-4">
-                {[1, 2].map(i => (
-                    <div key={i} className="skeleton h-20 rounded-xl" />
-                ))}
-            </div>
-        );
-    }
+    if (loading) return <div className="h-20 bg-white/5 animate-pulse rounded-xl" />;
 
     if (events.length === 0) {
         return (
-            <div className="text-center py-8 glass rounded-xl">
-                <div className="text-3xl mb-2">🎭</div>
-                <p className="text-gray-400">No events organized yet</p>
+            <div className="text-center py-8 bg-[#0B0F1A] rounded-xl border border-white/5 border-dashed">
+                <Calendar className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">No events organized yet</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {events.map((e: any) => (
                 <Link
                     key={e.event_id}
                     href={`/dashboard/event/${e.event_id}`}
-                    className="block premium-card p-4 group"
+                    className="flex justify-between items-center p-4 bg-[#0B0F1A] border border-white/5 hover:border-cyan-500/30 rounded-xl transition-all group"
                 >
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${e.status === 'PUBLISHED' ? 'badge-success' : 'badge-warning'}`}>
-                                    {e.status}
-                                </span>
-                                <span className="text-xs text-gray-500">{new Date(e.start_time).toLocaleDateString()}</span>
-                            </div>
-                            <h4 className="font-bold text-white group-hover:text-gradient transition-all">{e.title}</h4>
-                            <p className="text-xs text-gray-400">{e.venue_name || 'Online'}</p>
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider ${e.status === 'PUBLISHED' ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'
+                                }`}>
+                                {e.status}
+                            </span>
+                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                                <Clock size={10} />
+                                {new Date(e.start_time).toLocaleDateString()}
+                            </span>
                         </div>
-                        <span className="text-gray-400 group-hover:text-pink-500 group-hover:translate-x-1 transition-all">→</span>
+                        <h4 className="font-bold text-white text-sm group-hover:text-cyan-400 transition-colors">{e.title}</h4>
                     </div>
+                    <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-cyan-500 group-hover:translate-x-1 transition-all" />
                 </Link>
             ))}
         </div>
@@ -387,7 +424,7 @@ function FriendsManager({ userId }: { userId: string }) {
                 setSearchResults([]);
                 setSearchQuery('');
                 fetchFriends();
-            } else { alert('Failed'); }
+            } else { alert('Failed to send request'); }
         } catch (e) { console.error(e); }
     };
 
@@ -402,183 +439,88 @@ function FriendsManager({ userId }: { userId: string }) {
         } catch (e) { console.error(e); }
     };
 
-    const ChatWindow = ({ friend, onClose }: { friend: any, onClose: () => void }) => {
-        const [messages, setMessages] = useState<any[]>([]);
-        const [input, setInput] = useState('');
-        const [sending, setSending] = useState(false);
-
-        useEffect(() => {
-            fetchMessages();
-            const interval = setInterval(fetchMessages, 3000);
-            return () => clearInterval(interval);
-        }, [friend.id]);
-
-        const fetchMessages = async () => {
-            try {
-                const res = await fetch(`/api/messages?user_id=${userId}&friend_id=${friend.id}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setMessages(data);
-                }
-            } catch (e) { console.error(e); }
-        };
-
-        const sendMessage = async (e: React.FormEvent) => {
-            e.preventDefault();
-            if (!input.trim()) return;
-            setSending(true);
-            try {
-                const res = await fetch('/api/messages', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sender_id: userId, receiver_id: friend.id, content: input })
-                });
-                if (res.ok) {
-                    setInput('');
-                    fetchMessages();
-                }
-            } catch (e) { console.error(e); } finally { setSending(false); }
-        };
-
-        return (
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                <div className="glass-strong w-full max-w-md rounded-3xl overflow-hidden flex flex-col h-[600px] shadow-2xl">
-                    {/* Header */}
-                    <div className="p-4 border-b border-white/10 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 p-0.5">
-                                <div className="w-full h-full rounded-full bg-black overflow-hidden flex items-center justify-center">
-                                    {friend.image ? <img src={friend.image} className="w-full h-full object-cover" /> : <span>👤</span>}
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-white">{friend.name}</h3>
-                                <div className="flex items-center gap-1.5">
-                                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                    <span className="text-xs text-gray-400">Online</span>
-                                </div>
-                            </div>
-                        </div>
-                        <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl w-10 h-10 glass rounded-full flex items-center justify-center">×</button>
-                    </div>
-
-                    {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                        {messages.length === 0 && (
-                            <div className="text-center mt-20 opacity-50">
-                                <div className="text-4xl mb-2">👋</div>
-                                <p className="text-gray-400 text-sm">Start a conversation with {friend.name}</p>
-                            </div>
-                        )}
-                        {messages.map((msg) => {
-                            const isMe = msg.sender_id == userId;
-                            return (
-                                <div key={msg.message_id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${isMe ? 'bg-gradient-to-br from-pink-600 to-indigo-600 text-white rounded-tr-sm' : 'glass text-white rounded-tl-sm'}`}>
-                                        <p>{msg.content}</p>
-                                        <span className={`text-[10px] block text-right mt-1 ${isMe ? 'text-pink-200/70' : 'text-gray-500'}`}>
-                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* Input */}
-                    <form onSubmit={sendMessage} className="p-4 border-t border-white/10 flex gap-3 items-center">
-                        <input
-                            className="flex-1 premium-input"
-                            placeholder="Type a message..."
-                            value={input}
-                            onChange={e => setInput(e.target.value)}
-                            autoFocus
-                        />
-                        <button
-                            disabled={sending || !input.trim()}
-                            className="gradient-btn w-12 h-12 rounded-xl flex items-center justify-center disabled:opacity-50"
-                        >
-                            <svg className="w-5 h-5 translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        );
-    };
-
     return (
         <div>
-            {activeChat && <ChatWindow friend={activeChat} onClose={() => setActiveChat(null)} />}
+            {activeChat && <ChatWindow friend={activeChat} userId={userId} onClose={() => setActiveChat(null)} />}
 
-            <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-xl">
-                    👥
+            <div className="flex items-center gap-4 mb-6">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-cyan-500/20 text-cyan-400">
+                    <Users size={24} />
                 </div>
                 <div>
-                    <h3 className="text-xl font-bold text-white">Friends & Connections</h3>
-                    <p className="text-gray-400 text-sm">Connect with other users</p>
+                    <h3 className="text-xl font-bold text-white">Friends & Network</h3>
+                    <p className="text-gray-400 text-sm">Connect with other attendees</p>
                 </div>
             </div>
 
-            {/* Search */}
-            <div className="flex gap-3 mb-6">
+            {/* Search Bar */}
+            <div className="relative mb-6">
                 <input
-                    className="flex-1 premium-input"
-                    placeholder="Search users by name or email..."
+                    className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl pl-4 pr-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all text-sm"
+                    placeholder="Search users to add..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleSearch()}
                 />
-                <button onClick={handleSearch} disabled={searching} className="gradient-btn px-6 rounded-xl font-semibold disabled:opacity-50">
-                    {searching ? '...' : 'Find'}
+                <button
+                    onClick={handleSearch}
+                    disabled={searching || !searchQuery}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
+                >
+                    {searching ? <Loader size={16} className="animate-spin" /> : <Search size={16} />}
                 </button>
             </div>
 
             {/* Search Results */}
-            {searchResults.length > 0 && (
-                <div className="mb-8 pb-6 border-b border-white/10">
-                    <h4 className="text-sm font-bold text-gray-400 mb-4">Found Users</h4>
-                    <div className="space-y-3">
-                        {searchResults.map(u => (
-                            <div key={u.id} className="flex items-center justify-between premium-card p-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 p-0.5">
-                                        <div className="w-full h-full rounded-full bg-black overflow-hidden flex items-center justify-center">
-                                            {u.profile_image ? <img src={u.profile_image} className="w-full h-full object-cover" /> : <span>👤</span>}
+            <AnimatePresence>
+                {searchResults.length > 0 && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="mb-6 overflow-hidden"
+                    >
+                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Results</h4>
+                        <div className="space-y-2">
+                            {searchResults.map(u => (
+                                <div key={u.id} className="flex items-center justify-between bg-[#0B0F1A] p-3 rounded-xl border border-white/5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+                                            {u.profile_image ? <img src={u.profile_image} className="w-full h-full object-cover" /> : <User size={14} />}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-white text-sm">{u.name}</p>
+                                            <p className="text-[10px] text-gray-500">{u.email}</p>
                                         </div>
                                     </div>
-                                    <div>
-                                        <p className="font-bold text-white text-sm">{u.name}</p>
-                                        <p className="text-xs text-gray-500">{u.email}</p>
-                                    </div>
+                                    <button onClick={() => sendRequest(u.id)} className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500/20 transition-colors" title="Add Friend">
+                                        <UserPlus size={16} />
+                                    </button>
                                 </div>
-                                <button onClick={() => sendRequest(u.id)} className="badge-primary hover:bg-pink-500/30 transition-colors cursor-pointer">+ Add</button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Pending Requests */}
             {friends.some(f => f.status === 'PENDING' && f.is_incoming) && (
-                <div className="mb-8">
-                    <h4 className="text-sm font-bold text-yellow-500 mb-4 flex items-center gap-2">
-                        <span>⏳</span> Pending Requests
+                <div className="mb-6 p-4 rounded-xl bg-orange-500/5 border border-orange-500/10">
+                    <h4 className="text-xs font-bold text-orange-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        Pending Requests
                     </h4>
                     <div className="space-y-3">
                         {friends.filter(f => f.status === 'PENDING' && f.is_incoming).map(f => (
-                            <div key={f.id} className="flex items-center justify-between premium-card p-4 border-yellow-500/20">
+                            <div key={f.id} className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 p-0.5">
-                                        <div className="w-full h-full rounded-full bg-black overflow-hidden flex items-center justify-center">
-                                            {f.friend.image ? <img src={f.friend.image} className="w-full h-full object-cover" /> : <span>👤</span>}
-                                        </div>
+                                    <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden">
+                                        {f.friend.image ? <img src={f.friend.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><User size={14} /></div>}
                                     </div>
-                                    <p className="font-bold text-white">{f.friend.name}</p>
+                                    <span className="text-sm font-medium text-white">{f.friend.name}</span>
                                 </div>
                                 <div className="flex gap-2">
-                                    <button onClick={() => updateStatus(f.id, 'ACCEPTED')} className="px-4 py-2 rounded-lg bg-green-500 text-white text-sm font-semibold hover:bg-green-400 transition-colors">Accept</button>
-                                    <button onClick={() => updateStatus(f.id, 'REJECTED')} className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 text-sm font-semibold hover:bg-red-500/30 transition-colors">Reject</button>
+                                    <button onClick={() => updateStatus(f.id, 'ACCEPTED')} className="px-3 py-1 rounded-lg bg-green-500/20 text-green-400 text-xs font-bold hover:bg-green-500/30">Accept</button>
+                                    <button onClick={() => updateStatus(f.id, 'REJECTED')} className="px-3 py-1 rounded-lg bg-red-500/10 text-red-400 text-xs font-bold hover:bg-red-500/20">Decline</button>
                                 </div>
                             </div>
                         ))}
@@ -588,42 +530,164 @@ function FriendsManager({ userId }: { userId: string }) {
 
             {/* Friends List */}
             <div>
-                <h4 className="text-sm font-bold text-gray-400 mb-4">My Friends ({friends.filter(f => f.status === 'ACCEPTED').length})</h4>
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
+                    My Friends ({friends.filter(f => f.status === 'ACCEPTED').length})
+                </h4>
+
                 {friends.filter(f => f.status === 'ACCEPTED').length === 0 ? (
-                    <div className="text-center py-8 glass rounded-xl">
-                        <div className="text-3xl mb-2">🤝</div>
-                        <p className="text-gray-400 text-sm">No friends yet. Search and add people!</p>
+                    <div className="text-center py-6">
+                        <p className="text-gray-500 text-sm">You haven't added any friends yet.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {friends.filter(f => f.status === 'ACCEPTED').map(f => (
-                            <div key={f.id} className="flex items-center justify-between premium-card p-4 group">
+                            <div
+                                key={f.id}
+                                className="flex items-center justify-between p-3 rounded-xl bg-[#0B0F1A] border border-white/5 hover:bg-white/5 transition-colors group cursor-pointer"
+                                onClick={() => setActiveChat(f.friend)}
+                            >
                                 <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 p-0.5 group-hover:scale-105 transition-transform">
-                                        <div className="w-full h-full rounded-full bg-black overflow-hidden flex items-center justify-center">
-                                            {f.friend.image ? <img src={f.friend.image} className="w-full h-full object-cover" /> : <span>👤</span>}
+                                    <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 p-0.5">
+                                        <div className="w-full h-full rounded-full bg-[#0B0F1A] overflow-hidden flex items-center justify-center">
+                                            {f.friend.image ? <img src={f.friend.image} className="w-full h-full object-cover" /> : <User size={16} />}
                                         </div>
+                                        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#0B0F1A]" />
                                     </div>
-                                    <div>
-                                        <p className="font-bold text-white">{f.friend.name}</p>
-                                        <div className="flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                                            <span className="text-[10px] text-gray-500">Friend</span>
-                                        </div>
+                                    <div className="text-left">
+                                        <p className="font-bold text-white text-sm line-clamp-1">{f.friend.name}</p>
+                                        <p className="text-[10px] text-gray-500">Tap to chat</p>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => setActiveChat(f.friend)}
-                                    className="gradient-btn w-10 h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"
-                                    title="Send Message"
-                                >
-                                    💬
-                                </button>
+                                <MessageCircle size={18} className="text-gray-600 group-hover:text-cyan-400 transition-colors" />
                             </div>
                         ))}
                     </div>
                 )}
             </div>
+        </div>
+    );
+}
+
+function ChatWindow({ friend, userId, onClose }: { friend: any, userId: string, onClose: () => void }) {
+    const [messages, setMessages] = useState<any[]>([]);
+    const [input, setInput] = useState('');
+    const [sending, setSending] = useState(false);
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        fetchMessages();
+        const interval = setInterval(fetchMessages, 3000);
+        return () => clearInterval(interval);
+    }, [friend.id]);
+
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [messages]);
+
+    const fetchMessages = async () => {
+        try {
+            const res = await fetch(`/api/messages?user_id=${userId}&friend_id=${friend.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setMessages(data);
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    const sendMessage = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!input.trim()) return;
+        setSending(true);
+        try {
+            const res = await fetch('/api/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sender_id: userId, receiver_id: friend.id, content: input })
+            });
+            if (res.ok) {
+                setInput('');
+                fetchMessages();
+            }
+        } catch (e) { console.error(e); } finally { setSending(false); }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="w-full max-w-md bg-[#161B2B] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[600px]"
+            >
+                {/* Header */}
+                <div className="p-4 border-b border-white/5 flex items-center justify-between bg-[#0B0F1A]/50">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 p-0.5">
+                            <div className="w-full h-full rounded-full bg-[#0B0F1A] overflow-hidden flex items-center justify-center">
+                                {friend.image ? <img src={friend.image} className="w-full h-full object-cover" /> : <User size={16} />}
+                            </div>
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-white text-sm">{friend.name}</h3>
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                                <span className="text-[10px] text-gray-400">Online</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 rounded-full hover:bg-white/5 text-gray-400 hover:text-white transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Messages */}
+                <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0B0F1A]/30">
+                    {messages.length === 0 && (
+                        <div className="flex flex-col items-center justify-center h-full text-center opacity-40">
+                            <MessageCircle size={40} className="mb-2" />
+                            <p className="text-sm">Start chatting with {friend.name}</p>
+                        </div>
+                    )}
+                    {messages.map((msg) => {
+                        const isMe = msg.sender_id == userId;
+                        return (
+                            <div key={msg.message_id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${isMe
+                                        ? 'bg-cyan-600 text-white rounded-tr-sm'
+                                        : 'bg-[#1F2937] text-gray-200 rounded-tl-sm'
+                                    }`}>
+                                    <p>{msg.content}</p>
+                                    <span className={`text-[9px] block text-right mt-1 ${isMe ? 'text-cyan-200' : 'text-gray-500'}`}>
+                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* Input */}
+                <form onSubmit={sendMessage} className="p-4 border-t border-white/5 bg-[#161B2B]">
+                    <div className="relative">
+                        <input
+                            className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl pl-4 pr-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all text-sm"
+                            placeholder="Type your message..."
+                            value={input}
+                            onChange={e => setInput(e.target.value)}
+                            autoFocus
+                        />
+                        <button
+                            type="submit"
+                            disabled={sending || !input.trim()}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-cyan-500 text-white hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:bg-gray-700"
+                        >
+                            <Send size={16} />
+                        </button>
+                    </div>
+                </form>
+            </motion.div>
         </div>
     );
 }

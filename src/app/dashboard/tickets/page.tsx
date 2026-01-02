@@ -2,6 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    Calendar, MapPin, Clock, ArrowLeft, Download, XCircle,
+    QrCode, Ticket as TicketIcon, AlertCircle, CheckCircle, Loader
+} from 'lucide-react';
 
 export default function MyTickets() {
     const router = useRouter();
@@ -33,27 +38,24 @@ export default function MyTickets() {
         }
     };
 
-    const handlePrint = (ticketId: string) => {
-        // Create a print window or just print current logic
-        // For better UX, we'd open a dedicated clean print page, but using browser print on a specific element is tricky without a lib.
-        // Simple approach: Use a specific print style or open a new window with just the ticket HTML.
+    const handlePrint = (ticketId: string, ticketElementId: string) => {
         const printWindow = window.open('', '', 'height=600,width=800');
-        const ticketElement = document.getElementById(`ticket-${ticketId}`);
+        const ticketElement = document.getElementById(ticketElementId);
 
         if (printWindow && ticketElement) {
             printWindow.document.write('<html><head><title>Print Ticket</title>');
-            // Add some basic styles
             printWindow.document.write(`
                 <style>
-                    body { font-family: sans-serif; -webkit-print-color-adjust: exact; padding: 20px; display: flex; justify-content: center; }
-                    .ticket-container { border: 2px solid #000; border-radius: 12px; overflow: hidden; width: 600px; display: flex; }
-                    .left { background: #000; color: #fff; padding: 24px; flex: 1; position: relative; }
-                    .right { background: #fff; color: #000; padding: 24px; border-left: 2px dashed #000; width: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-                    h1 { margin: 0 0 10px; font-size: 24px; }
+                    body { font-family: 'Courier New', Courier, monospace; -webkit-print-color-adjust: exact; padding: 40px; display: flex; justify-content: center; background: #f0f0f0; }
+                    .ticket-container { border: 2px solid #000; border-radius: 0px; overflow: hidden; width: 700px; display: flex; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+                    .left { background: #000; color: #fff; padding: 30px; flex: 1; position: relative; border-right: 2px dashed #fff; }
+                    .right { background: #fff; color: #000; padding: 30px; width: 220px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+                    h1 { margin: 0 0 15px; font-size: 28px; line-height: 1.1; text-transform: uppercase; }
                     p { margin: 5px 0; }
-                    .label { font-size: 10px; text-transform: uppercase; color: #888; margin-top: 10px; }
-                    .value { font-size: 14px; font-weight: bold; }
-                    .barcode { margin-top: 20px; text-align: center; font-family: monospace; letter-spacing: 4px; border: 1px solid #333; padding: 5px; background: #fff; color: #000;}
+                    .label { font-size: 10px; text-transform: uppercase; color: #888; margin-top: 15px; letter-spacing: 1px; }
+                    .value { font-size: 16px; font-weight: bold; }
+                    .barcode { margin-top: 30px; text-align: center; font-family: 'Courier New', monospace; letter-spacing: 6px; border: 1px solid #333; padding: 10px; background: #fff; color: #000; font-size: 12px; }
+                    .visual-barcode { height: 40px; background: repeating-linear-gradient(90deg, #000 0px, #000 2px, #fff 2px, #fff 4px); width: 100%; margin-top: 10px; }
                 </style>
             `);
             printWindow.document.write('</head><body>');
@@ -67,136 +69,202 @@ export default function MyTickets() {
         }
     };
 
-    if (loading) return <div className="min-h-screen bg-black text-white p-8">Loading...</div>;
+    const handleCancel = async (ticket: any) => {
+        const eventDate = new Date(ticket.start_time);
+        const now = new Date();
+        const diffDays = (eventDate.getTime() - now.getTime()) / (1000 * 3600 * 24);
+
+        let confirmMsg = '';
+        if (diffDays > 7) {
+            confirmMsg = 'You are more than 7 days away. You will receive a FULL REFUND. Proceed?';
+        } else if (diffDays > 2) {
+            confirmMsg = `You are within 7 days. You will receive a 50% REFUND (৳${(Number(ticket.price) * 0.5).toFixed(2)}). Proceed?`;
+        } else {
+            alert('Cannot cancel within 48 hours of the event.');
+            return;
+        }
+
+        if (confirm(confirmMsg)) {
+            try {
+                const res = await fetch('/api/bookings/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticket_id: ticket.ticket_id, user_id: user.id })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message);
+                    fetchTickets(user.id);
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center">
+                <Loader className="w-8 h-8 text-cyan-500 animate-spin" />
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-black text-white p-8">
-            <div className="max-w-7xl mx-auto">
-                <header className="mb-12 border-b border-white/10 pb-6">
+        <div className="min-h-screen bg-[#0B0F1A] text-white font-sans selection:bg-cyan-500/30 pb-20">
+            {/* Ambient Background */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute top-[20%] left-[10%] w-[50vw] h-[50vw] bg-cyan-900/05 rounded-full blur-[120px]" />
+                <div className="absolute bottom-[10%] right-[10%] w-[50vw] h-[50vw] bg-purple-900/05 rounded-full blur-[120px]" />
+            </div>
+
+            <div className="relative z-10 max-w-7xl mx-auto p-6 lg:p-10">
+                <motion.header
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-12"
+                >
                     <button
                         onClick={() => router.push('/dashboard')}
-                        className="text-zinc-400 hover:text-white mb-4 flex items-center gap-2"
+                        className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 group"
                     >
-                        ← Back to Dashboard
+                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                        Back to Dashboard
                     </button>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-indigo-500 bg-clip-text text-transparent">
-                        My Tickets
-                    </h1>
-                </header>
+
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-3xl shadow-lg shadow-pink-500/20">
+                            🎟️
+                        </div>
+                        <div>
+                            <h1 className="text-4xl font-black text-white tracking-tight">My <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">Tickets</span></h1>
+                            <p className="text-gray-400 mt-1">Access and manage your event passes.</p>
+                        </div>
+                    </div>
+                </motion.header>
 
                 {tickets.length === 0 ? (
-                    <div className="text-center py-20 bg-zinc-900/50 rounded-2xl border border-zinc-800 border-dashed">
-                        <p className="text-zinc-500">You haven't booked any tickets yet.</p>
-                        <button onClick={() => router.push('/dashboard')} className="mt-4 text-pink-500 hover:text-pink-400">Browse Events</button>
+                    <div className="text-center py-20 bg-[#161B2B] rounded-3xl border border-white/5 border-dashed">
+                        <TicketIcon className="w-20 h-20 text-gray-700 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-white mb-2">No Tickets Found</h3>
+                        <p className="text-gray-400 mb-8">You haven't booked any tickets yet.</p>
+                        <button onClick={() => router.push('/dashboard')} className="px-8 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors">
+                            Browse Events
+                        </button>
                     </div>
                 ) : (
                     <div className="space-y-8">
                         {tickets.map((t) => (
-                            <div key={t.ticket_id} className="group">
-                                {/* Visual Ticket Representation for Screen */}
-                                <div className="relative flex flex-col md:flex-row bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 hover:border-pink-500/50 transition-all">
-                                    {/* Main Section */}
-                                    <div className="flex-1 p-6 md:p-8 flex flex-col justify-between relative bg-gradient-to-br from-zinc-900 to-black">
-                                        <div>
-                                            <div className="flex justify-between items-start">
-                                                <span className="px-3 py-1 rounded bg-white/10 text-white text-xs font-bold tracking-wider mb-4 inline-block">{t.ticket_name}</span>
-                                                <span className="text-zinc-500 font-mono text-xs">#{t.unique_code.slice(0, 8)}</span>
-                                            </div>
-                                            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">{t.event_title}</h2>
-                                            <p className="text-zinc-400 text-sm">{new Date(t.start_time).toLocaleDateString()} • {new Date(t.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                                        </div>
+                            <motion.div
+                                key={t.ticket_id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="group relative"
+                            >
+                                {/* Ticket Card */}
+                                <div className="relative flex flex-col md:flex-row bg-[#161B2B] rounded-3xl overflow-hidden border border-white/10 hover:border-pink-500/30 transition-all shadow-xl hover:shadow-2xl hover:shadow-pink-500/10">
 
-                                        <div className="grid grid-cols-2 gap-6 mt-8">
+                                    {/* Left Content */}
+                                    <div className="flex-1 p-6 md:p-10 relative overflow-hidden">
+                                        {/* Background Pattern */}
+                                        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+
+                                        <div className="relative z-10 flex flex-col h-full justify-between">
                                             <div>
-                                                <p className="text-xs text-zinc-600 uppercase font-bold">Venue</p>
-                                                <p className="text-sm text-white font-medium">{t.venue_name}</p>
-                                                <p className="text-xs text-zinc-500">{t.venue_city}</p>
+                                                <div className="flex justify-between items-start mb-6">
+                                                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white text-xs font-bold tracking-wider inline-flex items-center gap-1">
+                                                        <TicketIcon size={12} className="text-pink-500" />
+                                                        {t.ticket_name} PASS
+                                                    </span>
+                                                    <span className="font-mono text-xs text-gray-500 tracking-widest">#{t.unique_code.slice(0, 8).toUpperCase()}</span>
+                                                </div>
+                                                <h2 className="text-3xl font-black text-white mb-2 leading-tight">{t.event_title}</h2>
+
+                                                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 mt-4">
+                                                    <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg">
+                                                        <Calendar size={14} className="text-pink-400" />
+                                                        {new Date(t.start_time).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg">
+                                                        <Clock size={14} className="text-pink-400" />
+                                                        {new Date(t.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-xs text-zinc-600 uppercase font-bold">Admit</p>
-                                                <p className="text-sm text-white font-medium">1 Person</p>
+
+                                            <div className="grid grid-cols-2 gap-8 mt-10 pt-8 border-t border-white/5">
+                                                <div>
+                                                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1">Venue</p>
+                                                    <div className="flex items-start gap-2">
+                                                        <MapPin size={16} className="text-gray-400 mt-0.5 shrink-0" />
+                                                        <div>
+                                                            <p className="text-base font-bold text-white">{t.venue_name}</p>
+                                                            <p className="text-xs text-gray-400">{t.venue_city}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1">Admit</p>
+                                                    <p className="text-base font-bold text-white">01 Person</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Perforation Line (Visual) */}
-                                    <div className="hidden md:block w-0 border-l-2 border-dashed border-zinc-800 relative">
-                                        <div className="absolute -top-3 -left-3 w-6 h-6 bg-black rounded-full"></div>
-                                        <div className="absolute -bottom-3 -left-3 w-6 h-6 bg-black rounded-full"></div>
+                                    {/* Perforation */}
+                                    <div className="hidden md:flex flex-col justify-between py-2 relative">
+                                        <div className="w-6 h-6 rounded-full bg-[#0B0F1A] border-r border-b border-white/10 absolute -top-3 -left-3" />
+                                        <div className="h-full border-l-2 border-dashed border-white/10 mx-auto" />
+                                        <div className="w-6 h-6 rounded-full bg-[#0B0F1A] border-r border-t border-white/10 absolute -bottom-3 -left-3" />
                                     </div>
 
-                                    {/* Stub Section */}
-                                    <div className="md:w-64 bg-zinc-950 p-6 flex flex-col items-center justify-center text-center border-t md:border-t-0 border-zinc-800">
+                                    {/* Right Content (Stub using black/dark styling) */}
+                                    <div className="md:w-80 bg-[#000000]/40 backdrop-blur-sm p-8 flex flex-col items-center justify-center text-center border-t md:border-t-0 border-l border-white/10 relative">
 
+                                        {/* Status Indicators */}
                                         {t.status === 'CANCELLED' ? (
-                                            <div className="w-32 h-32 bg-red-500/10 rounded mb-4 flex items-center justify-center border border-red-500/20">
-                                                <span className="text-red-500 font-bold transform -rotate-12 border-2 border-red-500 px-2 py-1 rounded">CANCELLED</span>
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/30">
+                                                    <XCircle size={32} className="text-red-500" />
+                                                </div>
+                                                <p className="text-red-500 font-bold tracking-widest text-sm mb-1">CANCELLED</p>
+                                                <p className="text-xs text-red-500/70">Refund: ৳{t.refund_amount ? Number(t.refund_amount).toFixed(2) : '0.00'}</p>
                                             </div>
                                         ) : (
-                                            <div className="w-32 h-32 bg-white p-2 rounded mb-4">
-                                                {/* Placeholder QR */}
-                                                <div className="w-full h-full bg-black flex items-center justify-center text-white text-xs">QR CODE</div>
+                                            <div className="w-full flex flex-col items-center">
+                                                <div className="bg-white p-3 rounded-xl shadow-lg mb-6">
+                                                    <img
+                                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${t.unique_code}`}
+                                                        alt="QR Code"
+                                                        className="w-32 h-32"
+                                                    />
+                                                </div>
+                                                <p className="font-mono text-xs text-gray-500 tracking-[0.2em] mb-6">{t.unique_code}</p>
+
+                                                {t.status === 'VALID' && (
+                                                    <div className="w-full space-y-3">
+                                                        <button
+                                                            onClick={() => handlePrint(t.ticket_id, `ticket-${t.ticket_id}`)}
+                                                            className="w-full py-3 bg-white hover:bg-gray-100 text-black font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg hover:shadow-white/20"
+                                                        >
+                                                            <Download size={16} /> Download
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleCancel(t)}
+                                                            className="w-full py-3 bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 font-bold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
+                                                        >
+                                                            Cancel Ticket
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-
-                                        <p className="text-zinc-500 text-xs font-mono mb-4">{t.unique_code}</p>
-
-                                        {t.status === 'VALID' && (
-                                            <div className="w-full space-y-2">
-                                                <button
-                                                    onClick={() => handlePrint(t.ticket_id)}
-                                                    className="w-full py-2 bg-white text-black font-bold rounded hover:bg-zinc-200 transition-colors text-sm"
-                                                >
-                                                    Download Ticket
-                                                </button>
-                                                <button
-                                                    onClick={async () => {
-                                                        const eventDate = new Date(t.start_time);
-                                                        const now = new Date();
-                                                        const diffDays = (eventDate.getTime() - now.getTime()) / (1000 * 3600 * 24);
-
-                                                        let confirmMsg = '';
-                                                        if (diffDays > 7) {
-                                                            confirmMsg = 'You are more than 7 days away. You will receive a FULL REFUND. Proceed?';
-                                                        } else if (diffDays > 2) {
-                                                            confirmMsg = `You are within 7 days. You will receive a 50% REFUND (৳${(Number(t.price) * 0.5).toFixed(2)}). Proceed?`;
-                                                        } else {
-                                                            alert('Cannot cancel within 48 hours of the event.');
-                                                            return;
-                                                        }
-
-                                                        if (confirm(confirmMsg)) {
-                                                            try {
-                                                                const res = await fetch('/api/bookings/cancel', {
-                                                                    method: 'POST',
-                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                    body: JSON.stringify({ ticket_id: t.ticket_id, user_id: user.id })
-                                                                });
-                                                                const data = await res.json();
-                                                                if (res.ok) {
-                                                                    alert(data.message);
-                                                                    fetchTickets(user.id);
-                                                                } else {
-                                                                    alert(data.message);
-                                                                }
-                                                            } catch (e) {
-                                                                console.error(e);
-                                                            }
-                                                        }
-                                                    }}
-                                                    className="w-full py-2 bg-transparent border border-zinc-700 text-zinc-400 font-bold rounded hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/50 transition-colors text-sm"
-                                                >
-                                                    Cancel Ticket
-                                                </button>
-                                            </div>
-                                        )}
-                                        {t.status === 'CANCELLED' && (
-                                            <p className="text-red-500 text-xs mt-2">Refunded: ৳{t.refund_amount ? Number(t.refund_amount).toFixed(2) : '0.00'}</p>
                                         )}
                                     </div>
                                 </div>
 
-                                {/* Hidden Printable Version */}
+                                {/* Hidden Printable Ticket Structure */}
                                 <div id={`ticket-${t.ticket_id}`} className="hidden">
                                     <div className="ticket-container">
                                         <div className="left">
@@ -206,16 +274,22 @@ export default function MyTickets() {
                                             <p className="value">{t.venue_name}, {t.venue_city}</p>
                                             <p className="label">TICKET TYPE</p>
                                             <p className="value">{t.ticket_name}</p>
-                                            <div className="barcode">{t.unique_code}</div>
+                                            <div className="barcode">
+                                                ID: {t.unique_code}
+                                                <div className="visual-barcode"></div>
+                                            </div>
                                         </div>
                                         <div className="right">
                                             <p className="label">ADMIT ONE</p>
-                                            <div style={{ width: '80px', height: '80px', background: '#000', margin: '10px' }}></div>
+                                            <div style={{ width: '100px', height: '100px', background: '#000', margin: '20px 0', border: '4px solid #000' }}>
+                                                {/* In a real scenario, use an img tag for QR here too for print */}
+                                            </div>
                                             <p className="value">৳{Number(t.price).toFixed(2)}</p>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+
+                            </motion.div>
                         ))}
                     </div>
                 )}
