@@ -3,6 +3,8 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Loader, ArrowRight, Lock, Mail } from 'lucide-react';
 
 function LoginForm() {
     const router = useRouter();
@@ -46,120 +48,132 @@ function LoginForm() {
     };
 
     return (
-        <div className="relative min-h-screen animated-gradient-bg text-white overflow-hidden">
-            {/* Floating Orbs */}
-            <div className="floating-orb orb-1" />
-            <div className="floating-orb orb-2" />
-
-            {/* Particles */}
-            <div className="particles">
-                {[...Array(15)].map((_, i) => (
-                    <div
-                        key={i}
-                        className="particle"
-                        style={{
-                            left: `${Math.random() * 100}%`,
-                            animationDelay: `${Math.random() * 15}s`,
-                            animationDuration: `${15 + Math.random() * 10}s`,
-                        }}
-                    />
-                ))}
+        <div className="relative min-h-screen bg-[#0B0F1A] text-white flex items-center justify-center p-6 overflow-hidden">
+            {/* Ambient Background */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                <div className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] bg-cyan-900/10 rounded-full blur-[120px]" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-purple-900/10 rounded-full blur-[120px]" />
             </div>
 
-            <div className="relative z-10 flex min-h-screen items-center justify-center p-6">
-                <div className="w-full max-w-md">
-                    {/* Logo */}
-                    <Link href="/" className="block text-center mb-8">
-                        <h1 className="text-4xl font-black text-gradient-glow">Event Koi</h1>
-                    </Link>
-
-                    {/* Login Card */}
-                    <div className="glass-strong rounded-3xl p-8 shadow-2xl">
-                        <div className="text-center mb-8">
-                            <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
-                            <p className="text-gray-400">Sign in to continue to your dashboard</p>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="w-full max-w-md relative z-10"
+            >
+                {/* Logo */}
+                <Link href="/" className="flex items-center justify-center gap-2 mb-10 group">
+                    <div className="relative w-10 h-10">
+                        <span className="absolute inset-0 bg-gradient-to-tr from-cyan-400 to-orange-400 rounded-xl blur opacity-60 group-hover:opacity-100 transition-opacity" />
+                        <div className="relative w-full h-full bg-[#0B0F1A] rounded-xl border border-white/10 flex items-center justify-center">
+                            <span className="text-transparent bg-clip-text bg-gradient-to-tr from-cyan-400 to-orange-400 font-bold text-xl">E</span>
                         </div>
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">Event<span className="text-cyan-400">Koi</span></h1>
+                    </div>
+                </Link>
 
-                        {registered && (
-                            <div className="mb-6 rounded-xl bg-green-500/10 p-4 text-sm text-green-400 border border-green-500/20 text-center flex items-center justify-center gap-2">
-                                <span className="text-lg">✅</span>
-                                <span>Account created successfully! Please log in.</span>
-                            </div>
-                        )}
+                <div className="bg-[#161B2B]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
+                    {/* Decor */}
+                    <div className="absolute top-0 right-0 p-12 bg-cyan-500/5 rounded-bl-[4rem] pointer-events-none" />
 
-                        {error && (
-                            <div className="mb-6 rounded-xl bg-red-500/10 p-4 text-sm text-red-400 border border-red-500/20 text-center flex items-center justify-center gap-2">
-                                <span className="text-lg">⚠️</span>
-                                <span>{error}</span>
-                            </div>
-                        )}
+                    <div className="text-center mb-8 relative">
+                        <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
+                        <p className="text-gray-400">Sign in to continue to your dashboard</p>
+                    </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">
-                                    Email Address
-                                </label>
+                    {registered && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="mb-6 rounded-xl bg-green-500/10 p-4 text-sm text-green-400 border border-green-500/20 text-center flex items-center justify-center gap-2"
+                        >
+                            <span className="text-lg">✅</span>
+                            <span>Account created successfully! Please log in.</span>
+                        </motion.div>
+                    )}
+
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="mb-6 rounded-xl bg-red-500/10 p-4 text-sm text-red-400 border border-red-500/20 text-center flex items-center justify-center gap-2"
+                        >
+                            <span className="text-lg">⚠️</span>
+                            <span>{error}</span>
+                        </motion.div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-300 ml-1">Email Address</label>
+                            <div className="relative group">
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
                                 <input
                                     type="email"
                                     required
-                                    className="premium-input w-full"
+                                    className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all"
                                     placeholder="you@example.com"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 />
                             </div>
+                        </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">
-                                    Password
-                                </label>
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center ml-1">
+                                <label className="text-sm font-medium text-gray-300">Password</label>
+                                <a href="#" className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors">Forgot?</a>
+                            </div>
+                            <div className="relative group">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
                                 <input
                                     type="password"
                                     required
-                                    className="premium-input w-full"
+                                    className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all"
                                     placeholder="••••••••"
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 />
                             </div>
-
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full gradient-btn py-4 rounded-xl font-bold text-white text-lg disabled:opacity-50 disabled:cursor-not-allowed mt-6"
-                            >
-                                {loading ? (
-                                    <span className="flex items-center justify-center gap-2">
-                                        <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                        </svg>
-                                        Signing In...
-                                    </span>
-                                ) : (
-                                    'Sign In →'
-                                )}
-                            </button>
-                        </form>
-
-                        <div className="mt-8 pt-6 border-t border-white/10 text-center">
-                            <p className="text-gray-400">
-                                Don&apos;t have an account?{' '}
-                                <Link href="/register" className="text-gradient font-semibold hover:underline">
-                                    Create one
-                                </Link>
-                            </p>
                         </div>
-                    </div>
 
-                    {/* Back to home */}
-                    <div className="mt-8 text-center">
-                        <Link href="/" className="text-gray-500 hover:text-white transition-colors text-sm">
-                            ← Back to Home
-                        </Link>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full mt-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader className="w-5 h-5 animate-spin" />
+                                    Signing In...
+                                </>
+                            ) : (
+                                <>
+                                    Sign In <ArrowRight className="w-5 h-5" />
+                                </>
+                            )}
+                        </button>
+                    </form>
+
+                    <div className="mt-8 pt-8 border-t border-white/10 text-center">
+                        <p className="text-gray-400">
+                            Don&apos;t have an account?{' '}
+                            <Link href="/register" className="text-cyan-400 font-bold hover:text-cyan-300 transition-colors inline-block hover:underline">
+                                Create Account
+                            </Link>
+                        </p>
                     </div>
                 </div>
-            </div>
+
+                {/* Back Link */}
+                <div className="mt-8 text-center">
+                    <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-sm font-medium group">
+                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Home
+                    </Link>
+                </div>
+            </motion.div>
         </div>
     );
 }
@@ -167,8 +181,8 @@ function LoginForm() {
 export default function LoginPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen animated-gradient-bg flex items-center justify-center">
-                <div className="text-white text-xl">Loading...</div>
+            <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center">
+                <Loader className="w-8 h-8 text-cyan-500 animate-spin" />
             </div>
         }>
             <LoginForm />
