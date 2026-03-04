@@ -7,7 +7,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     User, Upload, FileText, CheckCircle, Shield, ArrowLeft,
     MessageCircle, Search, UserPlus, X, Send, Clock,
-    Calendar, MapPin, ChevronRight, Users, Loader, Check
+    Calendar, MapPin, ChevronRight, Users, Loader, Check,
+    Globe, Instagram, Twitter, Linkedin, Github, Award, Heart,
+    AlertTriangle
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -19,9 +21,13 @@ export default function ProfilePage() {
     // Form State
     const [formData, setFormData] = useState({
         designation: '',
+        bio: '',
+        location: '',
+        website_url: '',
         profile_image: null as File | null,
         organization_id_card: null as File | null,
-        proof_document: null as File | null
+        proof_document: null as File | null,
+        primary_interest_category_id: '' as string | number
     });
 
     useEffect(() => {
@@ -34,18 +40,37 @@ export default function ProfilePage() {
         fetchData(parsed.id || parsed.userId || parsed.insertId);
     }, [router]);
 
+    const [error, setError] = useState<string | null>(null);
+
     const fetchData = async (userId: string) => {
+        if (!userId || userId === 'undefined') {
+            setError("Invalid session. Redirecting to login...");
+            setTimeout(() => router.push('/login'), 2000);
+            return;
+        }
+
         try {
-            const res = await fetch(`/api/user/profile?userId=${userId}`);
+            const res = await fetch(`/api/users/${userId}/profile`);
             if (res.ok) {
                 const data = await res.json();
                 setUser(data);
-                setFormData(prev => ({ ...prev, designation: data.designation || '' }));
+                setFormData(prev => ({
+                    ...prev,
+                    designation: data.designation || '',
+                    bio: data.bio || '',
+                    location: data.location || '',
+                    website_url: data.website_url || '',
+                    primary_interest_category_id: data.primary_interest_category_id || ''
+                }));
             } else {
-                router.push('/login');
+                const errData = await res.json().catch(() => ({}));
+                setError(errData.message || "Session error. Please login again.");
+                // Give user a chance to see the error, but eventually redirect
+                setTimeout(() => router.push('/login'), 3000);
             }
         } catch (e) {
             console.error(e);
+            setError("Connection failed. Please check your internet.");
         } finally {
             setLoading(false);
         }
@@ -64,6 +89,9 @@ export default function ProfilePage() {
         const data = new FormData();
         data.append('user_id', user.id);
         data.append('designation', formData.designation);
+        data.append('bio', formData.bio);
+        data.append('location', formData.location);
+        data.append('website_url', formData.website_url);
         if (formData.profile_image) data.append('profile_image', formData.profile_image);
         if (formData.organization_id_card) data.append('organization_id_card', formData.organization_id_card);
         if (formData.proof_document) data.append('proof_document', formData.proof_document);
@@ -89,7 +117,27 @@ export default function ProfilePage() {
         }
     };
 
-    if (loading) {
+    if (error) {
+        return (
+            <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center p-6 text-center">
+                <div className="bg-[#161B2B] p-8 rounded-[2rem] border border-red-500/20 max-w-sm">
+                    <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500">
+                        <AlertTriangle size={32} />
+                    </div>
+                    <h2 className="text-xl font-bold mb-2">Access Issue</h2>
+                    <p className="text-gray-400 mb-6">{error}</p>
+                    <button
+                        onClick={() => router.push('/login')}
+                        className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                    >
+                        Return to Login
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (loading || !user) {
         return (
             <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center">
                 <Loader className="w-8 h-8 text-cyan-500 animate-spin" />
@@ -206,6 +254,45 @@ export default function ProfilePage() {
                                         onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
                                         placeholder="e.g. Senior Event Manager"
                                     />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Short Bio</label>
+                                    <textarea
+                                        className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500/50 transition-colors resize-none h-24"
+                                        value={formData.bio}
+                                        onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                                        placeholder="Tell us about yourself..."
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Location</label>
+                                        <div className="relative">
+                                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                                            <input
+                                                type="text"
+                                                className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
+                                                value={formData.location}
+                                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                                placeholder="e.g. Dhaka, Bangladesh"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Personal Website / Portfolio</label>
+                                        <div className="relative">
+                                            <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                                            <input
+                                                type="url"
+                                                className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
+                                                value={formData.website_url}
+                                                onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+                                                placeholder="https://example.com"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -655,8 +742,8 @@ function ChatWindow({ friend, userId, onClose }: { friend: any, userId: string, 
                         return (
                             <div key={msg.message_id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${isMe
-                                        ? 'bg-cyan-600 text-white rounded-tr-sm'
-                                        : 'bg-[#1F2937] text-gray-200 rounded-tl-sm'
+                                    ? 'bg-cyan-600 text-white rounded-tr-sm'
+                                    : 'bg-[#1F2937] text-gray-200 rounded-tl-sm'
                                     }`}>
                                     <p>{msg.content}</p>
                                     <span className={`text-[9px] block text-right mt-1 ${isMe ? 'text-cyan-200' : 'text-gray-500'}`}>

@@ -6,8 +6,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Users, Calendar, FileText, CheckCircle, XCircle,
     Shield, Search, AlertCircle, ArrowLeft, MoreHorizontal,
-    TrendingUp, Activity, Lock
+    TrendingUp, Activity, Lock, DollarSign, BarChart3
 } from 'lucide-react';
+import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
+import ModerationQueue from '@/components/admin/ModerationQueue';
+import UserManagement from '@/components/admin/UserManagement';
+import FinancialDashboard from '@/components/admin/FinancialDashboard';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -15,7 +19,7 @@ export default function AdminDashboard() {
     const [requests, setRequests] = useState<any[]>([]);
     const [users, setUsers] = useState<any[]>([]);
     const [events, setEvents] = useState<any[]>([]);
-    const [activeTab, setActiveTab] = useState('requests');
+    const [activeTab, setActiveTab] = useState('analytics');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -163,15 +167,40 @@ export default function AdminDashboard() {
                     className="bg-[#161B2B]/60 backdrop-blur-xl border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl"
                 >
                     {/* Tabs */}
-                    <div className="flex border-b border-white/5 p-2 overflow-x-auto">
-                        <TabButton id="requests" label="Role Requests" icon={<Lock size={16} />} active={activeTab === 'requests'} onClick={() => setActiveTab('requests')} />
-                        <TabButton id="users" label="All Users" icon={<Users size={16} />} active={activeTab === 'users'} onClick={() => setActiveTab('users')} />
-                        <TabButton id="events" label="All Events" icon={<Activity size={16} />} active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
+                    <div className="flex border-b border-white/5 p-2 overflow-x-auto gap-1">
+                        <TabButton id="analytics" label="Analytics" icon={<BarChart3 size={16} />} active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} />
+                        <TabButton id="requests" label="Requests" icon={<Lock size={16} />} active={activeTab === 'requests'} onClick={() => setActiveTab('requests')} />
+                        <TabButton id="moderation" label="Moderation" icon={<AlertCircle size={16} />} active={activeTab === 'moderation'} onClick={() => setActiveTab('moderation')} />
+                        <TabButton id="users" label="Users" icon={<Users size={16} />} active={activeTab === 'users'} onClick={() => setActiveTab('users')} />
+                        <TabButton id="events" label="Events" icon={<Activity size={16} />} active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
+                        <TabButton id="finance" label="Finance" icon={<DollarSign size={16} />} active={activeTab === 'finance'} onClick={() => setActiveTab('finance')} />
                     </div>
 
                     {/* Content Area */}
-                    <div className="p-6 overflow-x-auto">
+                    <div className="p-8">
                         <AnimatePresence mode="wait">
+                            {activeTab === 'analytics' && (
+                                <motion.div
+                                    key="analytics"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                >
+                                    <AnalyticsDashboard />
+                                </motion.div>
+                            )}
+
+                            {activeTab === 'moderation' && (
+                                <motion.div
+                                    key="moderation"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                >
+                                    <ModerationQueue />
+                                </motion.div>
+                            )}
+
                             {activeTab === 'requests' && (
                                 <motion.div
                                     key="requests"
@@ -222,76 +251,18 @@ export default function AdminDashboard() {
                                     exit={{ opacity: 0, x: -20 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <Table>
-                                        <TableHeader>
-                                            <Th>User Details</Th>
-                                            <Th>Role</Th>
-                                            <Th>Status</Th>
-                                            <Th align="right">Manage</Th>
-                                        </TableHeader>
-                                        <tbody>
-                                            {users.map((u, i) => (
-                                                <TableRow key={u.id} index={i}>
-                                                    <Td>
-                                                        <div className="flex flex-col">
-                                                            <span className="font-bold text-white">{u.name}</span>
-                                                            <span className="text-xs text-gray-500">{u.email}</span>
-                                                        </div>
-                                                    </Td>
-                                                    <Td>
-                                                        <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${u.role === 'admin' ? 'bg-red-500/10 text-red-500' :
-                                                                u.role === 'organizer' ? 'bg-purple-500/10 text-purple-400' :
-                                                                    'bg-gray-800 text-gray-400'
-                                                            }`}>
-                                                            {u.role}
-                                                        </span>
-                                                    </Td>
-                                                    <Td>
-                                                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${u.is_verified ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-gray-800 text-gray-500 border border-white/5'
-                                                            }`}>
-                                                            {u.is_verified ? <CheckCircle size={10} /> : <AlertCircle size={10} />}
-                                                            {u.is_verified ? 'Verified' : 'Unverified'}
-                                                        </span>
-                                                    </Td>
-                                                    <Td align="right">
-                                                        <div className="flex justify-end">
-                                                            {!u.is_verified ? (
-                                                                <ActionButton
-                                                                    onClick={async () => {
-                                                                        if (confirm(`Verify ${u.name}?`)) {
-                                                                            await fetch('/api/admin/verify-user', {
-                                                                                method: 'PUT',
-                                                                                body: JSON.stringify({ user_id: u.id, is_verified: true })
-                                                                            });
-                                                                            fetchData();
-                                                                        }
-                                                                    }}
-                                                                    variant="primary"
-                                                                >
-                                                                    Verify
-                                                                </ActionButton>
-                                                            ) : (
-                                                                <ActionButton
-                                                                    onClick={async () => {
-                                                                        if (confirm(`Revoke verification for ${u.name}?`)) {
-                                                                            await fetch('/api/admin/verify-user', {
-                                                                                method: 'PUT',
-                                                                                body: JSON.stringify({ user_id: u.id, is_verified: false })
-                                                                            });
-                                                                            fetchData();
-                                                                        }
-                                                                    }}
-                                                                    variant="danger"
-                                                                >
-                                                                    Revoke
-                                                                </ActionButton>
-                                                            )}
-                                                        </div>
-                                                    </Td>
-                                                </TableRow>
-                                            ))}
-                                        </tbody>
-                                    </Table>
+                                    <UserManagement />
+                                </motion.div>
+                            )}
+
+                            {activeTab === 'finance' && (
+                                <motion.div
+                                    key="finance"
+                                    initial={{ opacity: 0, scale: 0.98 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.98 }}
+                                >
+                                    <FinancialDashboard />
                                 </motion.div>
                             )}
 
@@ -318,11 +289,11 @@ export default function AdminDashboard() {
                                                     <Td className="text-gray-400">{e.organizer_name}</Td>
                                                     <Td>
                                                         <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-bold uppercase ${e.status === 'PUBLISHED' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
-                                                                e.status === 'DRAFT' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' :
-                                                                    'bg-red-500/10 text-red-500 border border-red-500/20'
+                                                            e.status === 'DRAFT' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' :
+                                                                'bg-red-500/10 text-red-500 border border-red-500/20'
                                                             }`}>
                                                             <div className={`w-1.5 h-1.5 rounded-full ${e.status === 'PUBLISHED' ? 'bg-green-500' :
-                                                                    e.status === 'DRAFT' ? 'bg-yellow-500' : 'bg-red-500'
+                                                                e.status === 'DRAFT' ? 'bg-yellow-500' : 'bg-red-500'
                                                                 }`} />
                                                             {e.status}
                                                         </span>
@@ -384,8 +355,8 @@ function TabButton({ id, label, icon, active, onClick }: any) {
         <button
             onClick={onClick}
             className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all ${active
-                    ? 'bg-white/10 text-white shadow-lg'
-                    : 'text-gray-500 hover:text-white hover:bg-white/5'
+                ? 'bg-white/10 text-white shadow-lg'
+                : 'text-gray-500 hover:text-white hover:bg-white/5'
                 }`}
         >
             {icon} {label}
