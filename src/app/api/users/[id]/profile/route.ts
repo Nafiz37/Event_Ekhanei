@@ -49,12 +49,13 @@ export async function GET(
         user.social_media_links = safeParse(user.social_media_links);
         user.badges = safeParse(user.badges);
 
-        // Also add attendance counts if possible (like in the other route)
+        // Add ticket and organized counts
         const [[{ organized }]] = await pool.query('SELECT COUNT(*) as organized FROM Events WHERE organizer_id = ?', [userId]) as any;
-        const [[{ attended }]] = await pool.query('SELECT COUNT(DISTINCT event_id) as attended FROM Bookings WHERE user_id = ? AND status = "VALID"', [userId]) as any;
+        const [[{ tickets }]] = await pool.query('SELECT COUNT(*) as tickets FROM Bookings WHERE user_id = ? AND status = "VALID"', [userId]) as any;
 
         user.events_organized = organized || 0;
-        user.events_attended = attended || 0;
+        user.events_attended = tickets || 0; // Keeping the name same to avoid UI changes
+        user.total_tickets = tickets || 0;
 
         return NextResponse.json(user);
     } catch (error) {

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
     User, Ticket, Bell, Shield, Calendar, Plus, Scan, LayoutDashboard,
-    Search, MapPin, Clock, ChevronRight, LogOut, ArrowUpRight
+    Search, MapPin, Clock, ChevronRight, LogOut, ArrowUpRight, ChevronDown, Filter
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -15,6 +15,9 @@ export default function Dashboard() {
     const [events, setEvents] = useState<any[]>([]);
     const [requestStatus, setRequestStatus] = useState<'idle' | 'pending' | 'success'>('idle');
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('All');
+    const [categories, setCategories] = useState<any[]>([]);
+    const [showCategoryMenu, setShowCategoryMenu] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -26,9 +29,39 @@ export default function Dashboard() {
         }
     }, [router]);
 
+    const userId = user?.id || user?.userId || (user as any)?.insertId;
+
     useEffect(() => {
-        if (user) fetchEvents();
-    }, [user]);
+        if (userId) {
+            fetchEvents();
+            fetchProfileStats(userId);
+            fetchCategories();
+        }
+    }, [userId, selectedCategory]);
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch('/api/categories');
+            if (res.ok) {
+                const data = await res.json();
+                setCategories(data);
+            }
+        } catch (e) {
+            console.error('Failed to fetch categories', e);
+        }
+    };
+
+    const fetchProfileStats = async (uid: string) => {
+        try {
+            const res = await fetch(`/api/users/${uid}/profile`);
+            if (res.ok) {
+                const data = await res.json();
+                setUser((prev: any) => ({ ...prev, ...data }));
+            }
+        } catch (error) {
+            console.error('Failed to fetch profile stats', error);
+        }
+    };
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -40,7 +73,7 @@ export default function Dashboard() {
     const fetchEvents = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/events?search=${encodeURIComponent(searchQuery)}`);
+            const res = await fetch(`/api/events?search=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(selectedCategory)}`);
             if (res.ok) {
                 const data = await res.json();
                 const upcomingEvents = data.filter((e: any) => new Date(e.end_time) > new Date());
@@ -116,8 +149,8 @@ export default function Dashboard() {
                             <h2 className="text-white font-medium flex items-center gap-2">
                                 Hello, {user.name}
                                 <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider ${user.role === 'admin' ? 'bg-red-500/10 text-red-500 border border-red-500/20' :
-                                        user.role === 'organizer' ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20' :
-                                            'bg-cyan-500/10 text-cyan-500 border border-cyan-500/20'
+                                    user.role === 'organizer' ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20' :
+                                        'bg-cyan-500/10 text-cyan-500 border border-cyan-500/20'
                                     }`}>
                                     {user.role}
                                 </span>
@@ -184,7 +217,7 @@ export default function Dashboard() {
                             </div>
                             <h3 className="text-gray-400 text-sm font-medium mb-1">Total Organized</h3>
                             <p className="text-4xl font-bold text-white mb-4">
-                                {user.role === 'organizer' ? '12' : '0'}
+                                {user.events_organized ?? (user.role === 'organizer' ? '...' : '0')}
                                 <span className="text-sm font-normal text-gray-500 ml-2">events</span>
                             </p>
                             <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
@@ -198,7 +231,7 @@ export default function Dashboard() {
                             </div>
                             <h3 className="text-gray-400 text-sm font-medium mb-1">Tickets Purchased</h3>
                             <p className="text-4xl font-bold text-white mb-4">
-                                {user.role === 'attendee' ? events.length : '5'}
+                                {user.events_attended ?? '0'}
                                 <span className="text-sm font-normal text-gray-500 ml-2">tickets</span>
                             </p>
                             <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
@@ -226,11 +259,59 @@ export default function Dashboard() {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <div className="flex gap-2">
-                                {/* Categories or filters could go here */}
-                                <button className="px-4 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors">All</button>
-                                <button className="px-4 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors">Music</button>
-                                <button className="px-4 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors">Tech</button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setSelectedCategory('All')}
+                                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${selectedCategory === 'All'
+                                        ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    All
+                                </button>
+
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setShowCategoryMenu(!showCategoryMenu)}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${selectedCategory !== 'All'
+                                            ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                                            : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                                            }`}
+                                    >
+                                        <Filter size={14} />
+                                        {selectedCategory === 'All' ? 'Categories' : selectedCategory}
+                                        <ChevronDown size={14} className={`transition-transform duration-300 ${showCategoryMenu ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {showCategoryMenu && (
+                                        <>
+                                            <div className="fixed inset-0 z-40" onClick={() => setShowCategoryMenu(false)} />
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                className="absolute right-0 mt-2 w-48 bg-[#161B2B] border border-white/10 rounded-2xl shadow-2xl z-50 py-2 overflow-hidden"
+                                            >
+                                                <div className="max-h-60 overflow-y-auto px-1 custom-scrollbar">
+                                                    {categories.map((cat) => (
+                                                        <button
+                                                            key={cat.category_id}
+                                                            onClick={() => {
+                                                                setSelectedCategory(cat.name);
+                                                                setShowCategoryMenu(false);
+                                                            }}
+                                                            className={`w-full text-left px-4 py-2.5 rounded-xl text-sm transition-colors ${selectedCategory === cat.name
+                                                                ? 'bg-cyan-500/10 text-cyan-400'
+                                                                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                                                }`}
+                                                        >
+                                                            {cat.name}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
 

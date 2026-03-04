@@ -6,12 +6,19 @@ import { TrendingUp, Users, Calendar, DollarSign, Activity } from 'lucide-react'
 
 export default function AnalyticsDashboard() {
     const [metrics, setMetrics] = useState<any>(null);
+    const [dailyData, setDailyData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('/api/analytics/platform')
-            .then(res => res.json())
-            .then(data => setMetrics(data))
+        Promise.all([
+            fetch('/api/analytics/platform').then(res => res.json()),
+            fetch('/api/analytics/daily?days=10').then(res => res.json())
+        ])
+            .then(([platformData, daily]) => {
+                setMetrics(platformData);
+                // Reverse to show chronological order for the chart
+                setDailyData(daily.reverse());
+            })
             .catch(console.error)
             .finally(() => setLoading(false));
     }, []);
@@ -23,7 +30,7 @@ export default function AnalyticsDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <MetricCard
                     title="Total Revenue"
-                    value={`${metrics.total_revenue} ${metrics.currency}`}
+                    value={`${Number(metrics.total_revenue).toLocaleString()} ${metrics.currency}`}
                     icon={<DollarSign size={20} />}
                     trend="+12% from last month"
                 />
@@ -47,14 +54,117 @@ export default function AnalyticsDashboard() {
                 />
             </div>
 
-            {/* Placeholder for charts */}
-            <div className="bg-[#0B0F1A]/80 border border-white/5 rounded-3xl p-8 h-80 flex items-center justify-center">
-                <div className="text-center">
-                    <TrendingUp size={48} className="text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-500">Real-time engagement charts will appear here.</p>
+            {/* Engagement Chart Section */}
+            <div className="bg-[#161B2B] border border-white/5 rounded-3xl p-8 overflow-hidden">
+                <div className="flex justify-between items-center mb-10">
+                    <div>
+                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                            <TrendingUp className="text-cyan-400" size={20} />
+                            Platform Engagement
+                        </h3>
+                        <p className="text-gray-500 text-sm">Real-time daily booking activity tracking</p>
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
+                            <span className="text-xs text-gray-400">Daily Bookings</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="h-64 w-full relative group">
+                    <EngagementChart data={dailyData} />
                 </div>
             </div>
         </div>
+    );
+}
+
+function EngagementChart({ data }: { data: any[] }) {
+    if (!data.length) return null;
+
+    const maxBookings = Math.max(...data.map(d => d.total_bookings), 1);
+    const width = 800;
+    const height = 200;
+
+    const points = data.map((d, i) => {
+        const x = (i / (data.length - 1)) * width;
+        const y = height - (d.total_bookings / (maxBookings * 1.2)) * height;
+        return `${x},${y}`;
+    }).join(' ');
+
+    const linePath = `M ${points}`;
+    const areaPath = `M 0,${height} L ${points} L ${width},${height} Z`;
+
+    return (
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
+                </linearGradient>
+            </defs>
+
+            {/* Grid Lines */}
+            {[0, 0.25, 0.5, 0.75, 1].map((p) => (
+                <line
+                    key={p}
+                    x1="0" y1={height * p} x2={width} y2={height * p}
+                    stroke="white" strokeOpacity="0.05" strokeWidth="1"
+                    strokeDasharray="4 4"
+                />
+            ))}
+
+            {/* Area Path */}
+            <motion.path
+                d={areaPath}
+                initial={{ opacity: 0, d: `M 0,${height} L ${data.map((_, i) => `${(i / (data.length - 1)) * width},${height}`).join(' ')} L ${width},${height} Z` }}
+                animate={{ opacity: 1, d: areaPath }}
+                transition={{ duration: 1.5, ease: "easeOut" }}
+                fill="url(#areaGradient)"
+            />
+
+            {/* Line Path */}
+            <motion.path
+                d={linePath}
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 2, ease: "easeInOut" }}
+                fill="none"
+                stroke="#06b6d4"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="drop-shadow-[0_0_8px_rgba(6,182,212,0.4)]"
+            />
+
+            {/* Data Points */}
+            {data.map((d, i) => {
+                const x = (i / (data.length - 1)) * width;
+                const y = height - (d.total_bookings / (maxBookings * 1.2)) * height;
+                return (
+                    <motion.g key={i}>
+                        <motion.circle
+                            initial={{ r: 0 }}
+                            animate={{ r: 4 }}
+                            transition={{ delay: 0.5 + i * 0.1 }}
+                            cx={x} cy={y}
+                            fill="#06b6d4"
+                            stroke="#0B0F1A"
+                            strokeWidth="2"
+                            className="drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]"
+                        />
+                        <text
+                            x={x} y={height + 20}
+                            className="text-[10px] fill-gray-500 font-medium select-none"
+                            textAnchor="middle"
+                        >
+                            {new Date(d.metric_date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                        </text>
+                    </motion.g>
+                );
+            })}
+        </svg>
     );
 }
 

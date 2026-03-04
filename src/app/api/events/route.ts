@@ -30,12 +30,19 @@ export async function GET(request: Request) {
         const conditions = [];
         const params = [];
 
+        const category = searchParams.get('category');
+        const search = searchParams.get('search');
+
         if (organizerId) {
             conditions.push('e.organizer_id = ?');
             params.push(organizerId);
         }
 
-        const search = searchParams.get('search');
+        if (category && category !== 'All') {
+            conditions.push('c.name = ?');
+            params.push(category);
+        }
+
         if (search) {
             conditions.push('(e.title LIKE ? OR u.name LIKE ?)');
             params.push(`%${search}%`, `%${search}%`);
